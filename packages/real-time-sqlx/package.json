@@ -1,7 +1,16 @@
 {
   "name": "real-time-sqlx",
-  "module": "index.ts",
   "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc --project ."
+  },
   "devDependencies": {},
   "peerDependencies": {
     "typescript": "^5.0.0"

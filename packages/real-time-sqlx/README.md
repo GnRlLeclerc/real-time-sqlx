@@ -8,3 +8,9 @@ Install dependencies:
 ```bash
 bun install
 ```
+
+Develop:
+
+```bash
+bun run build --watch
+```
