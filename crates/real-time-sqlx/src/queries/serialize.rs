@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 /// Prevents recursive lists of values
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum FinalConstraintValue {
+pub enum NativeType {
     Int(i32),
     String(String),
     Bool(bool),
@@ -17,8 +17,8 @@ pub enum FinalConstraintValue {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ConstraintValue {
-    Final(FinalConstraintValue),
-    List(Vec<FinalConstraintValue>),
+    Final(NativeType),
+    List(Vec<NativeType>),
 }
 
 /// Constraint operator

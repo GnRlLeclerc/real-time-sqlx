@@ -102,6 +102,7 @@ export type CreateData<T extends Indexable> = Omit<T, keyof Indexable>;
 /** Database operation type */
 export enum OperationType {
   Create = "create",
+  CreateMany = "create_many",
   Update = "update",
   Delete = "delete",
 }
@@ -124,7 +125,7 @@ export interface GranularOperationCreate<T extends Indexable>
 /** Create many entries in a database table */
 export interface GranularOperationCreateMany<T extends Indexable>
   extends GranularOperationBase {
-  type: OperationType.Create;
+  type: OperationType.CreateMany;
   data: CreateData<T>[];
 }
 
@@ -167,7 +168,7 @@ export interface OperationNotificationCreate<T extends Indexable>
 /** Notification of multiple entries creation  */
 export interface OperationNotificationCreateMany<T extends Indexable>
   extends OperationNotificationBase {
-  type: OperationType.Create;
+  type: OperationType.CreateMany;
   data: T[]; // The full data with ID is sent back
 }
 

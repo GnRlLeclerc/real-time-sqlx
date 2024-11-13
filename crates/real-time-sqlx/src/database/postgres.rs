@@ -2,7 +2,7 @@
 
 use sqlx::{postgres::PgRow, Executor, Postgres};
 
-use crate::queries::serialize::{FinalConstraintValue, QueryData, QueryTree, ReturnType};
+use crate::queries::serialize::{NativeType, QueryData, QueryTree, ReturnType};
 
 use super::prepare_sqlx_query;
 
@@ -19,10 +19,10 @@ where
     // Bind the values
     for value in values {
         sqlx_query = match value {
-            FinalConstraintValue::Null => sqlx_query.bind(None::<String>),
-            FinalConstraintValue::Int(int) => sqlx_query.bind(int),
-            FinalConstraintValue::String(string) => sqlx_query.bind(string),
-            FinalConstraintValue::Bool(bool) => sqlx_query.bind(bool),
+            NativeType::Null => sqlx_query.bind(None::<String>),
+            NativeType::Int(int) => sqlx_query.bind(int),
+            NativeType::String(string) => sqlx_query.bind(string),
+            NativeType::Bool(bool) => sqlx_query.bind(bool),
         };
     }
 

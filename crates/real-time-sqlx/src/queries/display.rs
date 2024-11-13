@@ -4,17 +4,15 @@ use std::fmt;
 
 use crate::utils::format_list;
 
-use super::serialize::{
-    Condition, Constraint, ConstraintValue, FinalConstraintValue, Operator, QueryTree,
-};
+use super::serialize::{Condition, Constraint, ConstraintValue, NativeType, Operator, QueryTree};
 
-impl fmt::Display for FinalConstraintValue {
+impl fmt::Display for NativeType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FinalConstraintValue::Int(int) => write!(f, "{}", int),
-            FinalConstraintValue::String(string) => write!(f, "'{}'", string),
-            FinalConstraintValue::Bool(bool) => write!(f, "{}", if *bool { 1 } else { 0 }),
-            FinalConstraintValue::Null => write!(f, "NULL"),
+            NativeType::Int(int) => write!(f, "{}", int),
+            NativeType::String(string) => write!(f, "'{}'", string),
+            NativeType::Bool(bool) => write!(f, "{}", if *bool { 1 } else { 0 }),
+            NativeType::Null => write!(f, "NULL"),
         }
     }
 }
