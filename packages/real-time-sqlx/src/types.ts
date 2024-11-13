@@ -71,13 +71,15 @@ export interface QuerySerialized {
 //                                   DATA                                    //
 // ************************************************************************* //
 
+export interface SingleQueryData<T> {
+  type: QueryReturnType.Single;
+  data: T | null;
+}
+
+export interface MultipleQueryData<T> {
+  type: QueryReturnType.Multiple;
+  data: T[];
+}
+
 /** Generic data return type */
-export type QueryData<T> =
-  | {
-      type: QueryReturnType.Single;
-      data: T;
-    }
-  | {
-      type: QueryReturnType.Multiple;
-      data: T[];
-    };
+export type QueryData<T> = SingleQueryData<T> | MultipleQueryData<T>;

@@ -17,17 +17,42 @@ import {
 /** Callback to create nested queries */
 export type QueryCallback = (query: InitialQueryBuilder) => BaseQueryBuilder;
 
-/** Final query class that can be serialized to JSON */
-export class FinalQuery<T extends QueryReturnType> {
+// NOTE: we need 2 different final query classes instead of one with generics,
+// because typescript is not able to strongly infer the return type with nominal types.
+
+/** Final query class that can be serialized to JSON,
+ * for queries that return one value.
+ */
+export class FinalQuerySingle {
   constructor(
     private table: string,
-    private returnType: T,
     private condition: Condition,
   ) {}
 
   toJSON(): QuerySerialized {
     return {
-      return: this.returnType,
+      return: QueryReturnType.Single,
+      table: this.table,
+      condition:
+        this.condition instanceof ConditionNone
+          ? null
+          : this.condition.toJSON(),
+    };
+  }
+}
+
+/** Final query class that can be serialized to JSON,
+ * for queries that return multiple values..
+ */
+export class FinalQueryMultiple {
+  constructor(
+    private table: string,
+    private condition: Condition,
+  ) {}
+
+  toJSON(): QuerySerialized {
+    return {
+      return: QueryReturnType.Multiple,
       table: this.table,
       condition:
         this.condition instanceof ConditionNone
@@ -45,13 +70,13 @@ export class BaseQueryBuilder {
   ) {}
 
   /** Fetch the first matching row */
-  fetchOne(): FinalQuery<QueryReturnType.Single> {
-    return new FinalQuery(this.table, QueryReturnType.Single, this.condition);
+  fetchOne(): FinalQuerySingle {
+    return new FinalQuerySingle(this.table, this.condition);
   }
 
   /** Fetch all matching rows */
-  fetchMultiple(): FinalQuery<QueryReturnType.Multiple> {
-    return new FinalQuery(this.table, QueryReturnType.Multiple, this.condition);
+  fetchMultiple(): FinalQueryMultiple {
+    return new FinalQueryMultiple(this.table, this.condition);
   }
 
   /** Condition accessor for internal use. */
