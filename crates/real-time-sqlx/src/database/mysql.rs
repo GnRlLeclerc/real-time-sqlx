@@ -2,7 +2,11 @@
 
 use sqlx::{mysql::MySqlRow, Executor, MySql};
 
-use crate::queries::serialize::{NativeType, QueryData, QueryTree, ReturnType};
+use crate::{
+    operations::serialize::{GranularOperation, OperationNotification},
+    queries::serialize::{NativeType, QueryData, QueryTree, ReturnType},
+    utils::{delete_statement, insert_many_statement, insert_statement, update_statement},
+};
 
 use super::prepare_sqlx_query;
 
@@ -43,3 +47,129 @@ where
 /// by mapping them to different data structs implementing `FromRow`
 /// and `Serialize` depending on the table name.
 pub type SerializeRowsMapped = fn(&QueryData<MySqlRow>, table: &str) -> serde_json::Value;
+
+/// Perform a granular operation on a MySQL database.
+/// Returns a notification to be sent to clients.
+pub async fn granular_operation_mysql<'a, E, T>(
+    operation: &GranularOperation,
+    executor: E,
+) -> Option<OperationNotification<T>>
+where
+    E: Executor<'a, Database = MySql>,
+    T: From<MySqlRow>,
+{
+    match operation {
+        GranularOperation::Create { table, data } => {
+            // Extract the keys and values from the JSON object
+            let keys: Vec<&String> = data.keys().collect(); // Get the keys in a specific order
+
+            // Produce the SQL query string
+            let string_query = insert_statement(&table, &keys);
+
+            let mut sqlx_query = sqlx::query(&string_query);
+
+            // Bind the values in the order of the keys
+            for key in keys.iter() {
+                let value = data.get(*key).unwrap();
+                sqlx_query = sqlx_query.bind(value);
+            }
+
+            let result = sqlx_query.fetch_one(executor).await.unwrap();
+            let data: T = result.into();
+
+            // Produce the creation notification
+            Some(OperationNotification::Create {
+                table: table.to_string(),
+                data,
+            })
+        }
+        GranularOperation::CreateMany { table, data } => {
+            // Extract the keys and values from the JSON object
+            let keys: Vec<&String> = data[0].keys().collect(); // Get the keys in a specific order
+
+            // Produce the SQL query string
+            let string_query = insert_many_statement(&table, &keys, data.len());
+
+            let mut sqlx_query = sqlx::query(&string_query);
+
+            // Bind all values in order of the keys
+            for entry in data.iter() {
+                for key in keys.iter() {
+                    let value = entry.get(*key).unwrap();
+                    sqlx_query = sqlx_query.bind(value);
+                }
+            }
+
+            let results = sqlx_query.fetch_all(executor).await.unwrap();
+            let data: Vec<T> = results.into_iter().map(|row| row.into()).collect();
+
+            // Produce the operation notification
+            Some(OperationNotification::CreateMany {
+                table: table.to_string(),
+                data,
+            })
+        }
+        GranularOperation::Update { table, id, data } => {
+            // Extract the keys and values from the JSON object
+            let keys: Vec<&String> = data.keys().collect(); // Get the keys in a specific order
+
+            // Produce the SQL query string
+            let string_query = update_statement(&table, &keys);
+
+            let mut sqlx_query = sqlx::query(&string_query);
+
+            // Bind the values in the order of the keys
+            for key in keys.iter() {
+                let value = data.get(*key).unwrap();
+                sqlx_query = sqlx_query.bind(value);
+            }
+
+            // Bind the ID
+            sqlx_query = match id {
+                NativeType::Null => sqlx_query.bind(None::<String>),
+                NativeType::Int(int) => sqlx_query.bind(int),
+                NativeType::String(string) => sqlx_query.bind(string),
+                NativeType::Bool(bool) => sqlx_query.bind(bool),
+            };
+
+            let result = sqlx_query.fetch_optional(executor).await.unwrap();
+
+            if result.is_none() {
+                return None;
+            }
+
+            let data: T = result.unwrap().into();
+
+            // Produce the creation notification
+            Some(OperationNotification::Update {
+                table: table.to_string(),
+                id: id.clone(),
+                data,
+            })
+        }
+        GranularOperation::Delete { table, id } => {
+            let string_query = delete_statement(&table);
+
+            let mut sqlx_query = sqlx::query(&string_query);
+
+            // Bind the ID
+            sqlx_query = match id {
+                NativeType::Null => sqlx_query.bind(None::<String>),
+                NativeType::Int(int) => sqlx_query.bind(int),
+                NativeType::String(string) => sqlx_query.bind(string),
+                NativeType::Bool(bool) => sqlx_query.bind(bool),
+            };
+
+            let result = sqlx_query.execute(executor).await.unwrap().rows_affected();
+
+            if result == 0 {
+                return None;
+            }
+
+            Some(OperationNotification::Delete {
+                table: table.to_string(),
+                id: id.clone(),
+            })
+        }
+    }
+}

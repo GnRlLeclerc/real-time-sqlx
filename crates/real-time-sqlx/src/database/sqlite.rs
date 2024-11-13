@@ -5,7 +5,10 @@ use sqlx::{sqlite::SqliteRow, Executor, Sqlite};
 use crate::{
     operations::serialize::{GranularOperation, OperationNotification},
     queries::serialize::{NativeType, QueryData, QueryTree, ReturnType},
-    utils::{delete_statement, insert_statement, to_numbered_placeholders, update_statement},
+    utils::{
+        delete_statement, insert_many_statement, insert_statement, to_numbered_placeholders,
+        update_statement,
+    },
 };
 
 use super::prepare_sqlx_query;
@@ -89,7 +92,7 @@ where
             let keys: Vec<&String> = data[0].keys().collect(); // Get the keys in a specific order
 
             // Produce the SQL query string
-            let string_query = insert_statement(&table, &keys);
+            let string_query = insert_many_statement(&table, &keys, data.len());
             let numbered_query = to_numbered_placeholders(&string_query);
 
             let mut sqlx_query = sqlx::query(&numbered_query);
