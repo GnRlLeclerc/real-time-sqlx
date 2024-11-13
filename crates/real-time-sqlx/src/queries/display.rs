@@ -2,11 +2,10 @@
 
 use std::fmt;
 
-use crate::{
-    serialize::{
-        Condition, Constraint, ConstraintValue, FinalConstraintValue, Operator, QueryTree,
-    },
-    utils::format_list,
+use crate::utils::format_list;
+
+use super::serialize::{
+    Condition, Constraint, ConstraintValue, FinalConstraintValue, Operator, QueryTree,
 };
 
 impl fmt::Display for FinalConstraintValue {

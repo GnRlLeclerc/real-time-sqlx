@@ -8,7 +8,7 @@ Note that this project only implements a subset of SQL for simplicity reasons (b
 
 ```
 ├── crates    # Rust crates
-│   └── real-time-sqlx # Real-time queries backend
+│   └── real-time-sqlx  # Real-time queries backend
 │
 └── packages  # Typescript packages
     └── real-time-sqlx  # Real-time queries frontend

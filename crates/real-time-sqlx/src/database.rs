@@ -6,7 +6,7 @@ use std::iter::repeat;
 use serde::Serialize;
 use sqlx::FromRow;
 
-use crate::serialize::{
+use crate::queries::serialize::{
     Condition, Constraint, ConstraintValue, FinalConstraintValue, QueryData, QueryTree,
 };
 

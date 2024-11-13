@@ -2,7 +2,7 @@
 
 use sqlx::{mysql::MySqlRow, Executor, MySql};
 
-use crate::serialize::{FinalConstraintValue, QueryData, QueryTree, ReturnType};
+use crate::queries::serialize::{FinalConstraintValue, QueryData, QueryTree, ReturnType};
 
 use super::prepare_sqlx_query;
 
