@@ -29,7 +29,7 @@ where
     // Fetch one or many rows depending on the query
     match query.return_type {
         ReturnType::Single => {
-            let row = sqlx_query.fetch_one(executor).await.ok();
+            let row = sqlx_query.fetch_optional(executor).await.unwrap();
             return QueryData::Single(row);
         }
         ReturnType::Multiple => {

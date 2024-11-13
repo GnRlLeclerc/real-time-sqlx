@@ -2,7 +2,10 @@
 
 use sqlx::{postgres::PgRow, Executor, Postgres};
 
-use crate::queries::serialize::{NativeType, QueryData, QueryTree, ReturnType};
+use crate::{
+    queries::serialize::{NativeType, QueryData, QueryTree, ReturnType},
+    utils::to_numbered_placeholders,
+};
 
 use super::prepare_sqlx_query;
 
@@ -13,8 +16,8 @@ where
 {
     // Prepare the query
     let (sql, values) = prepare_sqlx_query(&query);
-
-    let mut sqlx_query = sqlx::query(&sql);
+    let with_placeholders = to_numbered_placeholders(&sql);
+    let mut sqlx_query = sqlx::query(&with_placeholders);
 
     // Bind the values
     for value in values {
@@ -29,7 +32,7 @@ where
     // Fetch one or many rows depending on the query
     match query.return_type {
         ReturnType::Single => {
-            let row = sqlx_query.fetch_one(executor).await.ok();
+            let row = sqlx_query.fetch_optional(executor).await.unwrap();
             return QueryData::Single(row);
         }
         ReturnType::Multiple => {

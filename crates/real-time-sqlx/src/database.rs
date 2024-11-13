@@ -1,13 +1,14 @@
 //! Query utilities and particularized database implementations
 //! Some implementations need to be particularized because of trait generics hell.
 
-use std::iter::repeat;
-
 use serde::Serialize;
 use sqlx::FromRow;
 
-use crate::queries::serialize::{
-    Condition, Constraint, ConstraintValue, NativeType, QueryData, QueryTree,
+use crate::{
+    queries::serialize::{
+        Condition, Constraint, ConstraintValue, NativeType, QueryData, QueryTree,
+    },
+    utils::placeholders,
 };
 
 #[cfg(feature = "mysql")]
@@ -74,16 +75,7 @@ impl Traversable for ConstraintValue {
     /// Traverse a query constraint value
     fn traverse(&self) -> (String, Vec<NativeType>) {
         match self {
-            ConstraintValue::List(list) => (
-                format!(
-                    "({})",
-                    repeat("?".to_string())
-                        .take(list.len())
-                        .collect::<Vec<String>>()
-                        .join(", ")
-                ),
-                list.clone(),
-            ),
+            ConstraintValue::List(list) => (placeholders(list.len()), list.clone()),
             ConstraintValue::Final(value) => value.traverse(),
         }
     }
