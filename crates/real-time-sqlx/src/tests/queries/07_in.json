@@ -1,0 +1,12 @@
+{
+  "return": "many",
+  "table": "todos",
+  "condition": {
+    "type": "single",
+    "constraint": {
+      "column": "id",
+      "operator": "in",
+      "value": [1, 3]
+    }
+  }
+}

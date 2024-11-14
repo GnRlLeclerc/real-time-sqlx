@@ -170,3 +170,32 @@ async fn test_sqlite_empty() {
         QueryData::Many(_) => panic!("Expected a single row"),
     }
 }
+
+/// Test `IN` operations with arrays
+#[tokio::test]
+async fn test_sqlite_in() {
+    let pool = dummy_sqlite_database().await;
+    prepare_dummy_sqlite_database(&pool).await;
+
+    let query = read_serialized_query("07_in.json");
+    let result = fetch_sqlite_query(&query, &pool).await;
+
+    match result {
+        QueryData::Single(_) => {
+            panic!("Expected many rows")
+        }
+        QueryData::Many(rows) => {
+            assert_eq!(rows.len(), 2);
+
+            let first_row = Todo::from_row(&rows[0]).expect("Failed to convert first row");
+            assert_eq!(first_row.id, 1);
+            assert_eq!(first_row.title, "First todo");
+            assert_eq!(first_row.content, "This is the first todo");
+
+            let second_row = Todo::from_row(&rows[1]).expect("Failed to convert second row");
+            assert_eq!(second_row.id, 3);
+            assert_eq!(second_row.title, "Third todo");
+            assert_eq!(second_row.content, "This is the third todo");
+        }
+    }
+}

@@ -59,3 +59,17 @@ match query.table {
     _ => panic!("Unknown table name"), // ...or your preferred error handling
 }
 ```
+
+Execute serialized create, create many, update and delete operations:
+
+```rust
+let operation = GranularOperation::Create<Model> {
+    table = "model1".to_string(),
+    data = Model { content: "content".to_string() },
+};
+
+// The result contains returned data about the created row,
+// to be sent to the frontend for processing.
+let result = granular_operation_sqlite(operation, &pool).await;
+
+```
