@@ -1,6 +1,7 @@
 # Real-Time SQLx
 
 Rust backend for the real-time query engine.
+You can run the tests implemented against the SQLite backend with `cargo test`.
 
 Example usage:
 
