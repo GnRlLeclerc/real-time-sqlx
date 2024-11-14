@@ -948,6 +948,7 @@ dependencies = [
 name = "real-time-sqlx"
 version = "0.1.0"
 dependencies = [
+ "paste",
  "real-time-sqlx",
  "serde",
  "serde_json",

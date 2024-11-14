@@ -2,6 +2,7 @@
 
 pub mod database;
 pub mod error;
+pub mod macros;
 pub mod operations;
 pub mod queries;
 pub mod utils;
