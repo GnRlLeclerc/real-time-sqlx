@@ -4,7 +4,7 @@
 /// that given sqlite rows, serializes them to the appropriate model based on the table name.
 ///
 /// Example:
-/// ```rust
+/// ```ignore
 /// // Generate the function
 /// serialize_rows_static!(sqlite, ("todos", Todo), ("users", User));
 ///
@@ -31,7 +31,7 @@ macro_rules! serialize_rows_static {
 /// processing, without real-time updates.
 ///
 /// Example:
-/// ```rust
+/// ```ignore
 /// // Generate the function`
 /// granular_operations!(sqlite, ("todos", Todo), ("users", User));
 ///

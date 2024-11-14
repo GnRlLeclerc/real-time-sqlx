@@ -191,14 +191,16 @@ export interface OperationNotificationUpdate<T extends Indexable>
 }
 
 /** Notification of entry deletion */
-export interface OperationNotificationDelete extends OperationNotificationBase {
+export interface OperationNotificationDelete<T extends Indexable>
+  extends OperationNotificationBase {
   type: OperationType.Delete;
   id: FinalConstraintValue;
+  data: T;
 }
 
 /** Notification of database operation (returned by the backend) */
-export type OperationNotification =
-  | OperationNotificationCreate<any>
-  | OperationNotificationCreateMany<any>
-  | OperationNotificationUpdate<any>
-  | OperationNotificationDelete;
+export type OperationNotification<T extends Indexable> =
+  | OperationNotificationCreate<T>
+  | OperationNotificationCreateMany<T>
+  | OperationNotificationUpdate<T>
+  | OperationNotificationDelete<T>;

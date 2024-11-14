@@ -62,7 +62,11 @@ pub enum OperationNotification<T> {
         data: T,
     },
     #[serde(rename = "delete")]
-    Delete { table: String, id: FinalType },
+    Delete {
+        table: String,
+        id: FinalType,
+        data: T,
+    },
 }
 
 impl<T> Tabled for OperationNotification<T> {

@@ -189,15 +189,18 @@ where
             // Bind the ID
             sqlx_query = bind_sqlite_value(sqlx_query, id.clone());
 
-            let result = sqlx_query.execute(executor).await.unwrap().rows_affected();
+            let result = sqlx_query.fetch_optional(executor).await.unwrap();
 
-            if result == 0 {
+            if result.is_none() {
                 return None;
             }
+
+            let data = T::from_row(&result.unwrap()).unwrap();
 
             Some(OperationNotification::Delete {
                 table: table.to_string(),
                 id: id.clone(),
+                data,
             })
         }
     }

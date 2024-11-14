@@ -123,7 +123,7 @@ async fn test_sqlite_delete() {
     let result: OperationNotification<Todo> = result.unwrap();
 
     match result {
-        OperationNotification::Delete { table: _, id: _ } => {
+        OperationNotification::Delete { .. } => {
             // Nothing to check here. The operation is not None, meaning 1 row ws affected
         }
         _ => panic!("Expected a delete operation"),
