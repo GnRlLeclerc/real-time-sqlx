@@ -2,10 +2,34 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::queries::serialize::FinalType;
+use crate::{error::DeserializeError, queries::serialize::FinalType};
 
 /// Generic JSON object type
 pub type JsonObject = serde_json::Map<String, serde_json::Value>;
+
+/// Coerce a JSON value to a JSON object
+pub fn object_from_value(value: serde_json::Value) -> Result<JsonObject, DeserializeError> {
+    match value {
+        serde_json::Value::Object(obj) => Ok(obj),
+        value => Err(DeserializeError::IncompatibleValue(value)),
+    }
+}
+
+/// Coerce a JSON value to a JSON object array
+pub fn object_array_from_value(
+    value: serde_json::Value,
+) -> Result<Vec<JsonObject>, DeserializeError> {
+    match value {
+        serde_json::Value::Array(array) => {
+            let mut objects = Vec::new();
+            for item in array {
+                objects.push(object_from_value(item)?);
+            }
+            Ok(objects)
+        }
+        value => Err(DeserializeError::IncompatibleValue(value)),
+    }
+}
 
 /// Entities related to a specific table
 pub trait Tabled {
