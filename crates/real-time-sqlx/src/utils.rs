@@ -127,3 +127,63 @@ pub(crate) fn delete_statement(table: &str) -> String {
 
     format!("DELETE FROM {table} WHERE id = ? RETURNING *")
 }
+
+/// SQL-like implementation of the LIKE operator
+/// '_' matches any single character
+/// '%' matches zero or more characters
+pub(crate) fn sql_like(filter: &str, value: &str) -> bool {
+    // Helper function to perform recursive pattern matching
+    fn match_helper(f: &[char], v: &[char]) -> bool {
+        match (f, v) {
+            // If both filter and value are empty, it's a match
+            ([], []) => true,
+
+            // If filter has '%', it can match zero or more characters
+            ([first, rest @ ..], value) if *first == '%' => {
+                // Match zero characters or keep consuming value characters
+                match_helper(rest, value) || (!value.is_empty() && match_helper(f, &value[1..]))
+            }
+
+            // If filter has '_', it matches exactly one character if value is not empty
+            ([first, rest @ ..], [_, v_rest @ ..]) if *first == '_' => match_helper(rest, v_rest),
+
+            // If the current characters of both filter and value match, proceed
+            ([first, rest @ ..], [v_first, v_rest @ ..]) if first == v_first => {
+                match_helper(rest, v_rest)
+            }
+
+            // If nothing matches, return false
+            _ => false,
+        }
+    }
+
+    // Convert both filter and value to character slices for easier handling
+    match_helper(
+        &filter.chars().collect::<Vec<_>>(),
+        &value.chars().collect::<Vec<_>>(),
+    )
+}
+
+/// SQL-like implementation of the ILIKE operator
+pub(crate) fn sql_ilike(filter: &str, value: &str) -> bool {
+    sql_like(&filter.to_lowercase(), &value.to_lowercase())
+}
+
+#[cfg(test)]
+mod test_utils {
+    use super::sql_like;
+
+    #[test]
+    /// The sql_like function was generated with ChatGPT
+    /// This test guarantees that the function works as expected
+    fn test_sql_like() {
+        assert!(sql_like("he_lo", "hello"));
+        assert!(sql_like("h%o", "hello"));
+        assert!(!sql_like("h%o", "hi"));
+        assert!(sql_like("%", "anything"));
+        assert!(sql_like("_____", "12345"));
+        assert!(sql_like("_%_", "abc"));
+        assert!(sql_like("h_llo", "hello"));
+        assert!(!sql_like("he_lo", "heeeelo"));
+    }
+}

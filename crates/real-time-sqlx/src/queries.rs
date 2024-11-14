@@ -2,7 +2,10 @@
 
 use serialize::{Condition, Constraint, ConstraintValue, FinalType, Operator, QueryTree};
 
-use crate::operations::serialize::JsonObject;
+use crate::{
+    operations::serialize::JsonObject,
+    utils::{sql_ilike, sql_like},
+};
 
 pub mod display;
 pub mod serialize;
@@ -10,16 +13,6 @@ pub mod serialize;
 // ************************************************************************* //
 //                        QUERY SYSTEM IMPLEMENTATION                        //
 // ************************************************************************* //
-
-/// SQL-like implementation of the LIKE operator
-pub fn sql_like(filter: &str, value: &str) -> bool {
-    true
-}
-
-/// SQL-like implementation of the ILIKE operator
-pub fn sql_ilike(filter: &str, value: &str) -> bool {
-    sql_like(&filter.to_lowercase(), &value.to_lowercase())
-}
 
 /// Comparing 2 final types
 impl FinalType {
@@ -32,18 +25,12 @@ impl FinalType {
             Operator::LessThanOrEqual => self.less_than(other) || self.equals(other),
             Operator::GreaterThanOrEqual => self.greater_than(other) || self.equals(other),
             Operator::NotEqual => !self.equals(other),
-            Operator::Like => match self {
-                FinalType::String(s) => match other {
-                    FinalType::String(t) => sql_like(t, s),
-                    _ => false,
-                },
+            Operator::Like => match (self, other) {
+                (FinalType::String(s), FinalType::String(t)) => sql_like(t, s),
                 _ => false,
             },
-            Operator::ILike => match self {
-                FinalType::String(s) => match other {
-                    FinalType::String(t) => sql_ilike(t, s),
-                    _ => false,
-                },
+            Operator::ILike => match (self, other) {
+                (FinalType::String(s), FinalType::String(t)) => sql_ilike(t, s),
                 _ => false,
             },
             _ => panic!("Invalid operator {} for comparison", operator),
@@ -54,77 +41,56 @@ impl FinalType {
 
     /// &self == other
     pub fn equals(&self, other: &FinalType) -> bool {
-        match self {
-            FinalType::Number(n) => match other {
-                FinalType::Number(m) => n == m,
-                _ => false,
-            },
-            FinalType::String(s) => match other {
-                FinalType::String(t) => s == t,
-                _ => false,
-            },
-            FinalType::Bool(b) => match other {
-                FinalType::Bool(c) => b == c,
-                _ => false,
-            },
-            FinalType::Null => match other {
-                FinalType::Null => true,
-                _ => false,
-            },
+        match (self, other) {
+            (FinalType::Number(n), FinalType::Number(m)) => {
+                if n.is_f64() && m.is_f64() {
+                    n.as_f64().unwrap() == m.as_f64().unwrap()
+                } else if n.is_i64() && m.is_i64() {
+                    n.as_i64().unwrap() == m.as_i64().unwrap()
+                } else {
+                    false
+                }
+            }
+            (FinalType::String(s), FinalType::String(t)) => s == t,
+            (FinalType::Bool(b), FinalType::Bool(c)) => b == c,
+            (FinalType::Null, FinalType::Null) => true,
+            _ => false,
         }
     }
 
     /// &self < other
     pub fn less_than(&self, other: &FinalType) -> bool {
-        match self {
-            FinalType::Number(n) => match other {
-                FinalType::Number(m) => {
-                    if n.is_f64() && m.is_f64() {
-                        n.as_f64().unwrap() < m.as_f64().unwrap()
-                    } else if n.is_i64() && m.is_i64() {
-                        n.as_i64().unwrap() < m.as_i64().unwrap()
-                    } else {
-                        false
-                    }
+        match (self, other) {
+            (FinalType::Number(n), FinalType::Number(m)) => {
+                if n.is_f64() && m.is_f64() {
+                    n.as_f64().unwrap() < m.as_f64().unwrap()
+                } else if n.is_i64() && m.is_i64() {
+                    n.as_i64().unwrap() < m.as_i64().unwrap()
+                } else {
+                    false
                 }
-                _ => false,
-            },
-            FinalType::String(s) => match other {
-                FinalType::String(t) => s < t,
-                _ => false,
-            },
-            FinalType::Bool(b) => match other {
-                FinalType::Bool(c) => b < c,
-                _ => false,
-            },
-            FinalType::Null => false,
+            }
+            (FinalType::String(s), FinalType::String(t)) => s < t,
+            (FinalType::Bool(b), FinalType::Bool(c)) => b < c,
+            _ => false,
         }
     }
 
     /// &self > other
     pub fn greater_than(&self, other: &FinalType) -> bool {
-        match self {
-            FinalType::Number(n) => match other {
-                FinalType::Number(m) => {
-                    if n.is_f64() && m.is_f64() {
-                        n.as_f64().unwrap() > m.as_f64().unwrap()
-                    } else if n.is_i64() && m.is_i64() {
-                        n.as_i64().unwrap() > m.as_i64().unwrap()
-                    } else {
-                        false
-                    }
+        match (self, other) {
+            (FinalType::Number(n), FinalType::Number(m)) => {
+                if n.is_f64() && m.is_f64() {
+                    n.as_f64().unwrap() > m.as_f64().unwrap()
+                } else if n.is_i64() && m.is_i64() {
+                    n.as_i64().unwrap() > m.as_i64().unwrap()
+                } else {
+                    false
                 }
-                _ => false,
-            },
-            FinalType::String(s) => match other {
-                FinalType::String(t) => s > t,
-                _ => false,
-            },
-            FinalType::Bool(b) => match other {
-                FinalType::Bool(c) => b > c,
-                _ => false,
-            },
-            FinalType::Null => false,
+            }
+            (FinalType::String(s), FinalType::String(t)) => s > t,
+            (FinalType::Bool(b), FinalType::Bool(c)) => b > c,
+            _ => false,
         }
     }
 
