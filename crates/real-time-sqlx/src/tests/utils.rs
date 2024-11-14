@@ -5,7 +5,7 @@ use std::path::Path;
 use crate::{operations::serialize::GranularOperation, queries::serialize::QueryTree};
 
 /// Read a serialized query into a QueryTree for execution
-pub fn read_serialized_query(name: &str) -> QueryTree {
+pub(crate) fn read_serialized_query(name: &str) -> QueryTree {
     // Load the file
     let path = Path::new("src/tests/queries").join(name);
     let serialized_query = std::fs::read_to_string(path).unwrap();
@@ -16,7 +16,7 @@ pub fn read_serialized_query(name: &str) -> QueryTree {
 }
 
 /// Read a serialized operation into a GranularOperation for execution
-pub fn read_serialized_operation(name: &str) -> GranularOperation {
+pub(crate) fn read_serialized_operation(name: &str) -> GranularOperation {
     // Load the file
     let path = Path::new("src/tests/operations").join(name);
     let serialized_operation = std::fs::read_to_string(path).unwrap();

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{prelude::FromRow, MySql, Pool, Postgres, Sqlite};
 
 /// A dummy struct for testing purposes
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, Eq, PartialEq)]
 pub struct Todo {
     pub id: i32,
     pub title: String,

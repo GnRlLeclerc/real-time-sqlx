@@ -110,3 +110,28 @@ pub enum QueryData<D> {
     #[serde(rename = "many")]
     Many(Vec<D>),
 }
+
+/// Helper implementations for unwrapping query data
+impl<D> QueryData<D> {
+    pub fn unwrap_single(self) -> D {
+        match self {
+            QueryData::Single(Some(data)) => data,
+            QueryData::Single(None) => panic!("No data found"),
+            QueryData::Many(_) => panic!("Expected single row, found multiple rows"),
+        }
+    }
+
+    pub fn unwrap_optional_single(self) -> Option<D> {
+        match self {
+            QueryData::Single(data) => data,
+            QueryData::Many(_) => panic!("Expected single row, found multiple rows"),
+        }
+    }
+
+    pub fn unwrap_many(self) -> Vec<D> {
+        match self {
+            QueryData::Single(_) => panic!("Expected multiple rows, found single row"),
+            QueryData::Many(data) => data,
+        }
+    }
+}
