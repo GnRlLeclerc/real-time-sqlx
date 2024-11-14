@@ -109,6 +109,10 @@ export enum OperationType {
   Delete = "delete",
 }
 
+// ************************************************************************* //
+//                         GRANULAR UPDATE OPERATIONS                        //
+// ************************************************************************* //
+
 // Granular frontend operations
 // The frontend sends these operations to be done by the backend
 
@@ -151,6 +155,10 @@ export type GranularOperation =
   | GranularOperationCreateMany<any>
   | GranularOperationUpdate<any>
   | GranularOperationDelete;
+
+// ************************************************************************* //
+//                         OPERATION NOTIFICATIONS                           //
+// ************************************************************************* //
 
 // Complete backend operations
 // The backend sends back these operation results to be processed by the frontend

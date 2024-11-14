@@ -40,7 +40,6 @@ async fn test_deserialize_queries() {
 // ************************************************************************* //
 
 /// Test single row fetching
-#[cfg(feature = "sqlite")]
 #[tokio::test]
 async fn test_sqlite_single() {
     let pool = dummy_sqlite_database().await;
@@ -63,7 +62,6 @@ async fn test_sqlite_single() {
 }
 
 /// Test many row fetching
-#[cfg(feature = "sqlite")]
 #[tokio::test]
 async fn test_sqlite_many() {
     let pool = dummy_sqlite_database().await;
@@ -98,7 +96,6 @@ async fn test_sqlite_many() {
 }
 
 /// Test single row fetching with a condition
-#[cfg(feature = "sqlite")]
 #[tokio::test]
 async fn test_sqlite_single_with_condition() {
     let pool = dummy_sqlite_database().await;
@@ -121,7 +118,6 @@ async fn test_sqlite_single_with_condition() {
 }
 
 /// Test many row fetching with a condition returning a single row
-#[cfg(feature = "sqlite")]
 #[tokio::test]
 async fn test_sqlite_many_with_condition() {
     let pool = dummy_sqlite_database().await;
@@ -146,7 +142,6 @@ async fn test_sqlite_many_with_condition() {
 }
 
 /// Test fetching many rows with a nested OR condition
-#[cfg(feature = "sqlite")]
 #[tokio::test]
 async fn test_sqlite_nested_or() {
     let pool = dummy_sqlite_database().await;
@@ -166,7 +161,6 @@ async fn test_sqlite_nested_or() {
 }
 
 /// Test single row fetching with no existing matching entry
-#[cfg(feature = "sqlite")]
 #[tokio::test]
 async fn test_sqlite_empty() {
     let pool = dummy_sqlite_database().await;
