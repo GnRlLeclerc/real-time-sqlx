@@ -7,6 +7,11 @@ use crate::queries::serialize::FinalType;
 /// Generic JSON object type
 pub type JsonObject = serde_json::Map<String, serde_json::Value>;
 
+/// Entities related to a specific table
+pub trait Tabled {
+    fn get_table(&self) -> &str;
+}
+
 /// An incoming granular operation to be performed in the database
 /// The data can be partial or complete, depending on the operation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,6 +34,18 @@ pub enum GranularOperation {
     Delete { table: String, id: FinalType },
 }
 
+impl Tabled for GranularOperation {
+    /// Helper method to get the table name from the operation
+    fn get_table(&self) -> &str {
+        match self {
+            GranularOperation::Create { table, .. } => table,
+            GranularOperation::CreateMany { table, .. } => table,
+            GranularOperation::Update { table, .. } => table,
+            GranularOperation::Delete { table, .. } => table,
+        }
+    }
+}
+
 /// An outgoing operation notification to be sent to clients
 /// The data sent back is always complete, hence the generic parameter.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,4 +63,16 @@ pub enum OperationNotification<T> {
     },
     #[serde(rename = "delete")]
     Delete { table: String, id: FinalType },
+}
+
+impl<T> Tabled for OperationNotification<T> {
+    /// Helper method to get the table name from the operation
+    fn get_table(&self) -> &str {
+        match self {
+            OperationNotification::Create { table, .. } => table,
+            OperationNotification::CreateMany { table, .. } => table,
+            OperationNotification::Update { table, .. } => table,
+            OperationNotification::Delete { table, .. } => table,
+        }
+    }
 }
