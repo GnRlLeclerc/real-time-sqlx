@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::queries::serialize::NativeType;
+use crate::queries::serialize::FinalType;
 
 /// Generic JSON object type
 pub type JsonObject = serde_json::Map<String, serde_json::Value>;
@@ -22,11 +22,11 @@ pub enum GranularOperation {
     #[serde(rename = "update")]
     Update {
         table: String,
-        id: NativeType,
+        id: FinalType,
         data: JsonObject,
     },
     #[serde(rename = "delete")]
-    Delete { table: String, id: NativeType },
+    Delete { table: String, id: FinalType },
 }
 
 /// An outgoing operation notification to be sent to clients
@@ -41,9 +41,9 @@ pub enum OperationNotification<T> {
     #[serde(rename = "update")]
     Update {
         table: String,
-        id: NativeType,
+        id: FinalType,
         data: T,
     },
     #[serde(rename = "delete")]
-    Delete { table: String, id: NativeType },
+    Delete { table: String, id: FinalType },
 }

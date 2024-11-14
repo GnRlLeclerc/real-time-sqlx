@@ -1,0 +1,9 @@
+{
+  "type": "update",
+  "id": 3,
+  "table": "todos",
+  "data": {
+    "title": "Updated todo",
+    "content": "This todo was updated"
+  }
+}

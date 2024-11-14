@@ -1,0 +1,14 @@
+{
+  "type": "create_many",
+  "table": "todos",
+  "data": [
+    {
+      "title": "Fourth todo",
+      "content": "This is the fourth todo"
+    },
+    {
+      "title": "Fifth todo",
+      "content": "This is the fifth todo"
+    }
+  ]
+}

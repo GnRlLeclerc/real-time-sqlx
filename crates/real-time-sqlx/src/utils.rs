@@ -31,6 +31,14 @@ pub fn format_iter<T: fmt::Display, I: IntoIterator<Item = T>>(
         .join(separator)
 }
 
+/// Create an owned vector of keys from a JSON object.
+/// The vector is not actually "ordered", rather it enables reading the values
+/// of multiple similar objects always in the same order for SQL insertion.
+#[inline]
+pub fn ordered_keys(object: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+    object.keys().map(|key| (*key).clone()).collect()
+}
+
 /// Convert a string with '?' placeholders to numbered '$1' placeholderss
 #[inline]
 pub fn to_numbered_placeholders(query: &str) -> String {
@@ -94,7 +102,7 @@ pub fn sanitize_identifier(str: &str) -> String {
 
 /// Generate an UPDATE statement from a table name and a list of keys
 #[inline]
-pub fn update_statement(table: &str, keys: &[&String]) -> String {
+pub fn update_statement(table: &str, keys: &[String]) -> String {
     let table = sanitize_identifier(table);
     let columns = keys
         .iter()
@@ -107,7 +115,7 @@ pub fn update_statement(table: &str, keys: &[&String]) -> String {
 
 /// Generate an INSERT statement from a table name and a list of keys
 #[inline]
-pub fn insert_statement(table: &str, keys: &[&String]) -> String {
+pub fn insert_statement(table: &str, keys: &[String]) -> String {
     let table = sanitize_identifier(table);
     let values_placeholders = placeholders(keys.len());
     let columns = format_iter(keys.iter().map(|s| sanitize_identifier(s)), ", ");
@@ -118,7 +126,7 @@ pub fn insert_statement(table: &str, keys: &[&String]) -> String {
 /// Generate an INSERT statement from a table name and a list of keys
 /// to insert multiple rows at once
 #[inline]
-pub fn insert_many_statement(table: &str, keys: &[&String], n_rows: usize) -> String {
+pub fn insert_many_statement(table: &str, keys: &[String], n_rows: usize) -> String {
     let table = sanitize_identifier(table);
     let values_placeholders = repeat_placeholders(keys.len(), n_rows);
     let columns = format_iter(keys.iter().map(|s| sanitize_identifier(s)), ", ");

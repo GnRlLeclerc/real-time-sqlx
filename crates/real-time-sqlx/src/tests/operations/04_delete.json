@@ -1,0 +1,5 @@
+{
+  "type": "delete",
+  "table": "todos",
+  "id": 1
+}

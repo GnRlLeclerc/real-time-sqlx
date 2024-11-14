@@ -4,15 +4,21 @@ use std::fmt;
 
 use crate::utils::format_list;
 
-use super::serialize::{Condition, Constraint, ConstraintValue, NativeType, Operator, QueryTree};
+use super::serialize::{Condition, Constraint, ConstraintValue, FinalType, Operator, QueryTree};
 
-impl fmt::Display for NativeType {
+impl fmt::Display for FinalType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            NativeType::Int(int) => write!(f, "{}", int),
-            NativeType::String(string) => write!(f, "'{}'", string),
-            NativeType::Bool(bool) => write!(f, "{}", if *bool { 1 } else { 0 }),
-            NativeType::Null => write!(f, "NULL"),
+            FinalType::Number(number) => {
+                if number.is_f64() {
+                    write!(f, "{}", number.as_f64().unwrap())
+                } else {
+                    write!(f, "{}", number.as_i64().unwrap())
+                }
+            }
+            FinalType::String(string) => write!(f, "'{string}'"),
+            FinalType::Bool(bool) => write!(f, "{}", if *bool { 1 } else { 0 }),
+            FinalType::Null => write!(f, "NULL"),
         }
     }
 }

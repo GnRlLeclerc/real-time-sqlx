@@ -18,12 +18,6 @@ async fn test_deserialize_queries() {
     for entry in fs::read_dir(queries_path).unwrap() {
         let entry = entry.unwrap();
 
-        println!(
-            "{:?}, {}",
-            entry.path(),
-            entry.file_name().to_str().unwrap()
-        );
-
         let serialized_query = fs::read_to_string(entry.path()).unwrap();
 
         // Deserialize the query from json

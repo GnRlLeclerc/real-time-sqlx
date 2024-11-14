@@ -1,0 +1,8 @@
+{
+  "type": "create",
+  "table": "todos",
+  "data": {
+    "title": "Fourth todo",
+    "content": "This is the fourth todo"
+  }
+}

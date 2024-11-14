@@ -5,10 +5,8 @@ use serde::Serialize;
 use sqlx::FromRow;
 
 use crate::{
-    queries::serialize::{
-        Condition, Constraint, ConstraintValue, NativeType, QueryData, QueryTree,
-    },
-    utils::placeholders,
+    queries::serialize::{Condition, Constraint, ConstraintValue, FinalType, QueryData, QueryTree},
+    utils::{placeholders, sanitize_identifier},
 };
 
 #[cfg(feature = "mysql")]
@@ -22,9 +20,9 @@ pub mod sqlite;
 
 /// Produce a prepared SQL string and a list of argument values for binding
 /// from a deserialized query, and for use in a SQLx query
-fn prepare_sqlx_query(query: &QueryTree) -> (String, Vec<NativeType>) {
+fn prepare_sqlx_query(query: &QueryTree) -> (String, Vec<FinalType>) {
     let mut string_query = "SELECT * FROM ".to_string();
-    string_query.push_str(&query.table);
+    string_query.push_str(&sanitize_identifier(&query.table));
 
     if let Some(condition) = &query.condition {
         string_query.push_str(" WHERE ");
@@ -61,19 +59,19 @@ where
 
 /// Trait to normalize the traversal of query constraints and conditions
 trait Traversable {
-    fn traverse(&self) -> (String, Vec<NativeType>);
+    fn traverse(&self) -> (String, Vec<FinalType>);
 }
 
-impl Traversable for NativeType {
+impl Traversable for FinalType {
     /// Traverse a final constraint value
-    fn traverse(&self) -> (String, Vec<NativeType>) {
+    fn traverse(&self) -> (String, Vec<FinalType>) {
         ("?".to_string(), vec![self.clone()])
     }
 }
 
 impl Traversable for ConstraintValue {
     /// Traverse a query constraint value
-    fn traverse(&self) -> (String, Vec<NativeType>) {
+    fn traverse(&self) -> (String, Vec<FinalType>) {
         match self {
             ConstraintValue::List(list) => (placeholders(list.len()), list.clone()),
             ConstraintValue::Final(value) => value.traverse(),
@@ -83,7 +81,7 @@ impl Traversable for ConstraintValue {
 
 impl Traversable for Constraint {
     /// Traverse a query constraint
-    fn traverse(&self) -> (String, Vec<NativeType>) {
+    fn traverse(&self) -> (String, Vec<FinalType>) {
         let (values_string_query, values) = self.value.traverse();
 
         (
@@ -98,7 +96,7 @@ impl Traversable for Constraint {
 
 impl Traversable for Condition {
     /// Traverse a query condition
-    fn traverse(&self) -> (String, Vec<NativeType>) {
+    fn traverse(&self) -> (String, Vec<FinalType>) {
         match self {
             Condition::Single { constraint } => constraint.traverse(),
             Condition::Or { conditions } => reduce_constraints_list(conditions, " OR "),
@@ -109,9 +107,9 @@ impl Traversable for Condition {
 
 /// Create a list of string queries and constraint values vectors from a list of
 /// conditions
-fn reduce_constraints_list(conditions: &[Condition], sep: &str) -> (String, Vec<NativeType>) {
+fn reduce_constraints_list(conditions: &[Condition], sep: &str) -> (String, Vec<FinalType>) {
     let mut placeholder_strings: Vec<String> = vec![];
-    let mut total_values: Vec<NativeType> = vec![];
+    let mut total_values: Vec<FinalType> = vec![];
 
     conditions.iter().for_each(|condition| {
         let (string_query, values) = condition.traverse();
