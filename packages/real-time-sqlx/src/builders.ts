@@ -44,7 +44,7 @@ export class FinalQuerySingle {
 /** Final query class that can be serialized to JSON,
  * for queries that return multiple values..
  */
-export class FinalQueryMultiple {
+export class FinalQueryMany {
   constructor(
     private table: string,
     private condition: Condition,
@@ -52,7 +52,7 @@ export class FinalQueryMultiple {
 
   toJSON(): QuerySerialized {
     return {
-      return: QueryReturnType.Multiple,
+      return: QueryReturnType.Many,
       table: this.table,
       condition:
         this.condition instanceof ConditionNone
@@ -75,8 +75,8 @@ export class BaseQueryBuilder {
   }
 
   /** Fetch all matching rows */
-  fetchMultiple(): FinalQueryMultiple {
-    return new FinalQueryMultiple(this.table, this.condition);
+  fetchMany(): FinalQueryMany {
+    return new FinalQueryMany(this.table, this.condition);
   }
 
   /** Condition accessor for internal use. */
@@ -248,3 +248,7 @@ class QueryBuilderWithOrCondition extends BaseQueryBuilder {
 /** Create a new query on a table */
 export const query = (table: string): InitialQueryBuilder =>
   new InitialQueryBuilder(table);
+
+// TODO : put these builders in a separate file ? They are generic, but for select
+// Add simple update, create, create_many, delete builders that produce json objects in the format expected by the engine.
+// Vivement que ça finisse par marcher, pour l'instant c'est pas toujours évident que je fais pas de la merde.

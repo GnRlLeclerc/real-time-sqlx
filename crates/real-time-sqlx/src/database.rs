@@ -47,7 +47,7 @@ where
             Some(row) => serde_json::json!(QueryData::Single(Some(T::from_row(row).unwrap()))),
             None => serde_json::json!(QueryData::Single(None::<T>)),
         },
-        QueryData::Multiple(rows) => serde_json::json!(QueryData::Multiple(
+        QueryData::Many(rows) => serde_json::json!(QueryData::Many(
             rows.iter()
                 .map(|row| T::from_row(row).unwrap())
                 .collect::<Vec<T>>()

@@ -36,9 +36,9 @@ where
             let row = sqlx_query.fetch_optional(executor).await.unwrap();
             return QueryData::Single(row);
         }
-        ReturnType::Multiple => {
+        ReturnType::Many => {
             let rows = sqlx_query.fetch_all(executor).await.unwrap();
-            return QueryData::Multiple(rows);
+            return QueryData::Many(rows);
         }
     }
 }

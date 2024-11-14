@@ -69,8 +69,8 @@ pub enum Condition {
 pub enum ReturnType {
     #[serde(rename = "single")]
     Single,
-    #[serde(rename = "multiple")]
-    Multiple,
+    #[serde(rename = "many")]
+    Many,
 }
 
 /// Final serialized query tree
@@ -88,6 +88,6 @@ pub struct QueryTree {
 pub enum QueryData<D> {
     #[serde(rename = "single")]
     Single(Option<D>),
-    #[serde(rename = "multiple")]
-    Multiple(Vec<D>),
+    #[serde(rename = "many")]
+    Many(Vec<D>),
 }

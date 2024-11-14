@@ -57,7 +57,7 @@ export type ConditionSerialized =
 /** How many rows should be returned from the query */
 export enum QueryReturnType {
   Single = "single",
-  Multiple = "multiple",
+  Many = "many",
 }
 
 /** Complete query data */
@@ -76,13 +76,13 @@ export interface SingleQueryData<T> {
   data: T | null;
 }
 
-export interface MultipleQueryData<T> {
-  type: QueryReturnType.Multiple;
+export interface ManyQueryData<T> {
+  type: QueryReturnType.Many;
   data: T[];
 }
 
 /** Generic data return type */
-export type QueryData<T> = SingleQueryData<T> | MultipleQueryData<T>;
+export type QueryData<T> = SingleQueryData<T> | ManyQueryData<T>;
 
 // ************************************************************************* //
 //                                  UPDATES                                  //
@@ -96,8 +96,10 @@ export interface Indexable {
 /** Indexable data update type (partial attributes without the id) */
 export type UpdateData<T extends Indexable> = Partial<Omit<T, keyof Indexable>>;
 
-/** Indexable data creation type (all attributes without the id) */
-export type CreateData<T extends Indexable> = Omit<T, keyof Indexable>;
+type MakeFieldOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+/** Indexable data creation type (all attributes with optional id) */
+export type CreateData<T extends Indexable> = MakeFieldOptional<T, "id">;
 
 /** Database operation type */
 export enum OperationType {

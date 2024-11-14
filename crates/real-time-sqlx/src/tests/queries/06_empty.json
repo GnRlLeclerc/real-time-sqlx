@@ -1,0 +1,12 @@
+{
+  "return": "single",
+  "table": "todos",
+  "condition": {
+    "type": "single",
+    "constraint": {
+      "column": "id",
+      "operator": "=",
+      "value": -1
+    }
+  }
+}

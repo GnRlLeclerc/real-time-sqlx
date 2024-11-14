@@ -1,0 +1,38 @@
+{
+  "return": "many",
+  "table": "todos",
+  "condition": {
+    "type": "or",
+    "conditions": [
+      {
+        "type": "single",
+        "constraint": {
+          "column": "id",
+          "operator": "=",
+          "value": 1
+        }
+      },
+      {
+        "type": "or",
+        "conditions": [
+          {
+            "type": "single",
+            "constraint": {
+              "column": "id",
+              "operator": "=",
+              "value": 2
+            }
+          },
+          {
+            "type": "single",
+            "constraint": {
+              "column": "id",
+              "operator": "=",
+              "value": 3
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
