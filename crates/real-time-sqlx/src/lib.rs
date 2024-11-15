@@ -1,5 +1,6 @@
 //! Real-time SQLx library
 
+pub mod backends;
 pub mod database;
 pub mod error;
 pub mod macros;
