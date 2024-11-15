@@ -4,10 +4,10 @@
 //                                CONSTRAINTS                                //
 // ************************************************************************* //
 
-type FinalConstraintValue = string | number | boolean | null;
+export type FinalValue = string | number | boolean | null;
 
 /** Constraint value */
-export type ConstraintValue = FinalConstraintValue | FinalConstraintValue[];
+export type ConstraintValue = FinalValue | FinalValue[];
 
 /** Constraint data */
 export interface ConstraintSerialized {
@@ -90,7 +90,7 @@ export type QueryData<T> = SingleQueryData<T> | ManyQueryData<T>;
 
 /** Base type for table data which has an index */
 export interface Indexable {
-  id: FinalConstraintValue;
+  id: FinalValue;
 }
 
 /** Indexable data update type (partial attributes without the id) */
@@ -139,14 +139,14 @@ export interface GranularOperationCreateMany<T extends Indexable>
 export interface GranularOperationUpdate<T extends Indexable>
   extends GranularOperationBase {
   type: OperationType.Update;
-  id: FinalConstraintValue;
+  id: FinalValue;
   data: UpdateData<T>;
 }
 
 /** Delete an entry in a database table */
 export interface GranularOperationDelete extends GranularOperationBase {
   type: OperationType.Delete;
-  id: FinalConstraintValue;
+  id: FinalValue;
 }
 
 /** Granular database operation (used in the frontend) */
@@ -186,7 +186,7 @@ export interface OperationNotificationCreateMany<T extends Indexable>
 export interface OperationNotificationUpdate<T extends Indexable>
   extends OperationNotificationBase {
   type: OperationType.Update;
-  id: FinalConstraintValue;
+  id: FinalValue;
   data: T; // The full data with ID is sent back
 }
 
@@ -194,7 +194,7 @@ export interface OperationNotificationUpdate<T extends Indexable>
 export interface OperationNotificationDelete<T extends Indexable>
   extends OperationNotificationBase {
   type: OperationType.Delete;
-  id: FinalConstraintValue;
+  id: FinalValue;
   data: T;
 }
 

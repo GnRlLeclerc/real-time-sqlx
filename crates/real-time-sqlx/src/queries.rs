@@ -22,8 +22,8 @@ impl FinalType {
             Operator::Equal => self.equals(other),
             Operator::LessThan => self.less_than(other),
             Operator::GreaterThan => self.greater_than(other),
-            Operator::LessThanOrEqual => self.less_than(other) || self.equals(other),
-            Operator::GreaterThanOrEqual => self.greater_than(other) || self.equals(other),
+            Operator::LessThanOrEqual => self.less_than_or_equal(other),
+            Operator::GreaterThanOrEqual => self.greater_than_or_equal(other),
             Operator::NotEqual => !self.equals(other),
             Operator::Like => match (self, other) {
                 (FinalType::String(s), FinalType::String(t)) => sql_like(t, s),

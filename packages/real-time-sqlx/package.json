@@ -1,19 +1,27 @@
 {
   "name": "real-time-sqlx",
-  "type": "module",
+  "version": "0.1.0",
+  "author": {
+    "name": "Thibaut de Saivre",
+    "url": "https://github.com/GnRlLeclerc"
+  },
   "main": "dist/index.js",
   "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "version": "0.1.0",
-  "scripts": {
-    "build": "tsc --project ."
+  "dependencies": {
+    "@tauri-apps/api": "^2.1.1",
+    "uuid": "^11.0.3"
   },
   "devDependencies": {},
   "peerDependencies": {
     "typescript": "^5.0.0"
-  }
+  },
+  "description": "Frontend for the real-time SQLx engine",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project ."
+  },
+  "type": "module",
+  "types": "dist/index.d.ts"
 }
-

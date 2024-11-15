@@ -25,19 +25,23 @@ export type QueryCallback = (query: InitialQueryBuilder) => BaseQueryBuilder;
  */
 export class FinalQuerySingle {
   constructor(
-    private table: string,
+    private _table: string,
     private condition: Condition,
   ) {}
 
   toJSON(): QuerySerialized {
     return {
       return: QueryReturnType.Single,
-      table: this.table,
+      table: this._table,
       condition:
         this.condition instanceof ConditionNone
           ? null
           : this.condition.toJSON(),
     };
+  }
+
+  get table(): string {
+    return this._table;
   }
 }
 
@@ -46,19 +50,23 @@ export class FinalQuerySingle {
  */
 export class FinalQueryMany {
   constructor(
-    private table: string,
+    private _table: string,
     private condition: Condition,
   ) {}
 
   toJSON(): QuerySerialized {
     return {
       return: QueryReturnType.Many,
-      table: this.table,
+      table: this._table,
       condition:
         this.condition instanceof ConditionNone
           ? null
           : this.condition.toJSON(),
     };
+  }
+
+  get table(): string {
+    return this._table;
   }
 }
 
