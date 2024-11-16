@@ -9,4 +9,4 @@ pub mod queries;
 pub mod utils;
 
 #[cfg(test)]
-pub mod tests;
+mod tests;
