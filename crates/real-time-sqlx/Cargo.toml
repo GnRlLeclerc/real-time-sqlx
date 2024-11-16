@@ -2,6 +2,9 @@
 name = "real-time-sqlx"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/GnRlLeclerc/real-time-sqlx"
+authors = ["Thibaut de Saivre"]
+description = "Real-time SQLx backend for Tauri"
 
 [features]
 postgres = ["sqlx/postgres"]
