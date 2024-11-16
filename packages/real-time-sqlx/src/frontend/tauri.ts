@@ -82,10 +82,10 @@ const subscribeSingle = <T extends Indexable>(
   callback: UpdateSingleFn<T>,
 ): UnsubscribeFn => {
   // Generate a unique subscription ID and an unsubscription function.
-  const id = uuidv4();
+  const channelId = uuidv4();
   const unsubscribe = () => {
     getInvoke().then((invoke) =>
-      invoke("unsubscribe", { id, table: finalQuery.table }),
+      invoke("unsubscribe", { channelId, table: finalQuery.table }),
     );
   };
 
@@ -134,7 +134,7 @@ const subscribeSingle = <T extends Indexable>(
     const { data } = await invoke<SingleQueryData<T>>("subscribe", {
       query,
       channel,
-      id,
+      channelId,
     });
     internalData = data;
 
@@ -155,10 +155,10 @@ const subscribeMany = <T extends Indexable>(
   callback: UpdateManyFn<T>,
 ): UnsubscribeFn => {
   // Generate a unique subscription ID and an unsubscription function.
-  const id = uuidv4();
+  const channelId = uuidv4();
   const unsubscribe = () => {
     getInvoke().then((invoke) =>
-      invoke("unsubscribe", { id, table: finalQuery.table }),
+      invoke("unsubscribe", { channelId, table: finalQuery.table }),
     );
   };
 
@@ -205,7 +205,7 @@ const subscribeMany = <T extends Indexable>(
     const { data } = await invoke<ManyQueryData<T>>("subscribe", {
       query,
       channel,
-      id,
+      channelId,
     });
 
     // Set the initial internal data

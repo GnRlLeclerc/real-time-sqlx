@@ -63,11 +63,11 @@ macro_rules! real_time_tauri {
             dispatcher: tauri::State<'_, RealTimeDispatcher>,
             // Passed as arguments
             operation: $crate::operations::serialize::GranularOperation,
-        ) -> tauri::Result<()> {
+        ) -> tauri::Result<serde_json::Value> {
             let pool: &$crate::database_pool!($db_type) = &pool;
-            dispatcher.process_operation(operation, pool).await;
+            let serialized_notification = dispatcher.process_operation(operation, pool).await;
 
-            Ok(())
+            Ok(serialized_notification)
         }
 
         /// Fetch a query once (without subscription)
@@ -93,8 +93,8 @@ macro_rules! real_time_tauri {
 #[macro_export]
 macro_rules! real_time_dispatcher {
     ($db_type:ident, $(($table_name:literal, $struct:ty)),+ $(,)?) => {
-        /// Real-time static channel dispatcher for the Tauri backend
         $crate::macros::paste::paste! {
+            /// Real-time static channel dispatcher for the Tauri backend
             pub struct RealTimeDispatcher {
                 // Define allRwLocked channels for the given tables
                 $(
@@ -105,12 +105,13 @@ macro_rules! real_time_dispatcher {
 
         $crate::macros::paste::paste! {
             impl RealTimeDispatcher {
-                /// Implement the generic handler function for all tables and channels
+                /// Implement the generic handler function for all tables and channels.
+                /// Returns a serialized operation notification option.
                 pub async fn process_operation(
                     &self,
                     operation: $crate::operations::serialize::GranularOperation,
                     pool: &$crate::database_pool!($db_type),
-                ) {
+                ) -> serde_json::Value {
                     use $crate::operations::serialize::Tabled;
                     match operation.get_table() {
                         $(
@@ -125,7 +126,10 @@ macro_rules! real_time_dispatcher {
                                         &self.[<$table_name _channels>],
                                         &result,
                                     ).await;
+                                    return serde_json::to_value(Some(result)).unwrap();
                                 }
+
+                                serde_json::Value::Null
                             }
                         )+
                         _ => panic!("Table not found"),
