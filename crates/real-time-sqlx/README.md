@@ -1,75 +1,47 @@
 # Real-Time SQLx
 
 Rust backend for the real-time query engine.
-You can run the tests implemented against the SQLite backend with `cargo test`.
 
-Example usage:
+Run tests against Sqlite:
 
-Define structs that can be serialized to JSON and built from sqlx rows:
-
-```rust
-/// A table model
-#[derive(sqlx::FromRow, serde::Serialize)]
-pub struct Model {
-  pub id: i32,
-  pub content: String,
-}
+```bash
+cargo test
 ```
 
-Execute serialized queries and serialize the results back to JSON.
+## Behind the API
 
-```rust
-// Load a serialized query
-let query: QueryTree = serde_json::from_str(
-    r#"{
-        "return": "single",
-        "table": "users",
-        "condition": {
-            "type": "single",
-            "constraint": {
-                "column": "id",
-                "operator": "=",
-                "value": {
-                    "final": 1
-                }
-            }
-        }
-    }"#,
-)
-.unwrap();
+<div align="center">
+  <img src="../../docs/real-time-engine.svg" alt="Real-time engine schema">
+</div>
 
-// Fetch rows (depending on your preferred database)
-let rows = fetch_sqlite_query(&query, &database_pool);
-let rows = fetch_mysql_query(&query, &database_pool);
-let rows = fetch_postgres_query(&query, &database_pool);
+### Query Syntax Tree
 
-// Serialize the data to JSON again, ready to be sent to the frontend
-let json_value = serialize_rows::<Model, SqliteRow>(rows);
-let json_value = serialize_rows::<Model, MysqlRow>(rows);
-let json_value = serialize_rows::<Model, PgRow>(rows);
-```
+Queries are represented by a _syntax tree_ that encodes a subset of SQL. They have two functions:
 
-You can also statically serialize rows using different models using the table name as a discriminant.
+- Being converted into SQL queries for fetching data once (or initially when creating a subscription).
+- Checking if an `OperationNotification` that just occured affects the current query subscription.
 
-```rust
-match query.table {
-    "model1" => serialize_rows::<Model1, PgRow>(rows),
-    "model2" => serialize_rows::<Model2, PgRow>(rows),
-    "model3" => serialize_rows::<Model3, PgRow>(rows),
-    _ => panic!("Unknown table name"), // ...or your preferred error handling
-}
-```
+### Channels
 
-Execute serialized create, create many, update and delete operations:
+Tauri channels enable the backend to send data to the frontend. In `real-time-sqlx`, channels are used to send `OperationNotifications` so that the frontend updates its store accordingly.
 
-```rust
-let operation = GranularOperation::Create<Model> {
-    table = "model1".to_string(),
-    data = Model { content: "content".to_string() },
-};
+When a subscription is created, the frontend sends 3 elements to the backend:
 
-// The result contains returned data about the created row,
-// to be sent to the frontend for processing.
-let result = granular_operation_sqlite(operation, &pool).await;
+- A `QueryTree`
+- A channel instance
+- A subscription `uuid` key (for targeted removal triggered by the frontend)
 
-```
+The `(QueryTree, Channel)` tuples are stored on a **per-table** basis, meaning that `OperationNotifications` are only checked against the current active subscriptions of their respective table. This is easy to implement and generalize to as many tables as required, but not recommended for high usage cases (in multi-user cases, you should separate subscription families further in order to avoid checking all table operations against all active subscriptions of the same table).
+
+### Granular Operations
+
+Similarly to queries, database operations like `INSERT`, `DELETE` and `UPDATE` are represented by the `GranularOperation` enum. When executed, they are converted into an `Option<OperationNotification>`, which is `None` if the operation failed (represented by `null` in the frontend).
+
+Every time a `GranularOperation` succeeds, its resulting `OperationNotification` is used to see which subscriptions of the related table are affected by it. If an `OperationNotification` matches a query, it is send to the frontend via its corresponding channel.
+Exception: if an `OperationNotification::Update` does not match a query, an `OperationNotification::Delete` is sent to the channel. This causes the channel to remove the element of corresponding ID from its cache, in case a previously matching element was altered in a way that makes it not match the query anymore.
+
+### Real Time Dispatcher
+
+The heart of the engine is the `RealTimeDispatcher` struct. It holds, for each declared `(table name, table struct)` pair, an instance of `HashMap<key, (QueryTree, Channel)>` locked in a thread-safe and async-safe way behind a `RwLock`.
+
+It is responsible for adding and removing supscriptions, and it processes `GranularOperations` before checking their related queries. One singleton instance is owned and managed by Tauri and passed as an argument to the Tauri commands.

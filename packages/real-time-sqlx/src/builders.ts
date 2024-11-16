@@ -256,7 +256,3 @@ class QueryBuilderWithOrCondition extends BaseQueryBuilder {
 /** Create a new query on a table */
 export const query = (table: string): InitialQueryBuilder =>
   new InitialQueryBuilder(table);
-
-// TODO : put these builders in a separate file ? They are generic, but for select
-// Add simple update, create, create_many, delete builders that produce json objects in the format expected by the engine.
-// Vivement que ça finisse par marcher, pour l'instant c'est pas toujours évident que je fais pas de la merde.

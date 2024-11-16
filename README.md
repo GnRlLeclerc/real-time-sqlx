@@ -194,7 +194,7 @@ The `unsubscribe` function returned allows you to terminate the subscription ear
 
 #### Execute SQL operations
 
-The return types are explicited here for clarity purposes, but they are actually dynamically inferredfrom the `Model` type and the operation being performed.
+The return types are explicited here for clarity purposes, but they are actually dynamically inferred from the `Model` type and the operation being performed.
 
 Insert a row:
 
@@ -277,7 +277,8 @@ pub struct Todo {
 }
 ```
 
-Generate the boilerplate code that creates the structures and Tauri commands needed to communicate with the frontend:
+Generate the boilerplate code that creates the structures and Tauri commands needed to communicate with the frontend.
+You have to specify `(sql table name, rust struct)` pairs that will be matched together by the engine.
 
 ```rust
 real_time_sqlx::real_time_tauri!(sqlite, ("models", Model), ("todos", Todo));  // For Sqlite (recommended for Tauri)
@@ -355,4 +356,4 @@ pub fn run() {
 
 ## Behind the API
 
-TODO: explain with more details how everything works. Link to the backend crate README.
+See the [Backend README](./crates/real-time-sqlx/README.md).
