@@ -1,5 +1,7 @@
 //! Helper macros to automatically generate static dispatcher code between models.
 
+pub extern crate paste;
+
 /// Macro that generates the static rows serialization dispatcher function,
 /// that given sqlite rows, serializes them to the appropriate model based on the table name.
 ///
