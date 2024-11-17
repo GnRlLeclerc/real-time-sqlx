@@ -61,7 +61,7 @@ export enum QueryReturnType {
 }
 
 /** Complete query data */
-export interface QuerySerialized {
+export interface SerializedQuery {
   return: QueryReturnType;
   table: string;
   condition: ConditionSerialized | null;

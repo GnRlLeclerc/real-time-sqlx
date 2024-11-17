@@ -39,7 +39,7 @@ This project relies on the [sqlx](https://github.com/launchbadge/sqlx) rust crat
 
 ### Inspirations
 
-- [Knex](https://knexjs.org): for the typescript query builder frontend.
+- [Kysely](https://kysely.dev/): for the typescript query builder frontend.
 - [Firestore](https://firebase.google.com/docs/firestore): for the real-time subscription system, and the idea of executing queries directly from the frontend instead of having to implement a backend endpoint for every query.
 
 ### What this project is not
@@ -86,7 +86,7 @@ This project assumes that the models you intend to wire to it all possess an `id
 
 Features summary:
 
-- **Type-safe query builder** inspired by [Knex](https://knexjs.org/)
+- **Type-safe query builder** inspired by [Kysely](https://kysely.dev/)
 - **Real-time database subscriptions** inspired by [Firestore](https://firebase.google.com/docs/firestore)
 - Execute SQL queries directly from the frontend with _very little boilerplate_.
 
@@ -102,52 +102,72 @@ interface Model extends Indexable {
   title: string;
   content: string;
 }
+
+interface Todo extends Indexable {
+  id: string; // Strings are valid IDs
+  title: string;
+  content: string;
+}
 ```
 
-The following functions are exported for you:
+Then define a database interface that contains all of your models:
 
-- `query`: build SQL `SELECT` queries, fetched using the following functions:
-  - `fetch`: fetch a SQL query once
-  - `subscribe`: fetch a SQL query and subscribe to its changes
-- `execute`: execute SQL operations defined using the following functions:
-  - `create`: create a row
-  - `createMany`: create many rows at once
-  - `update`: update a row
-  - `remove`: delete a row
+```typescript
+interface Database {
+  models: Model; // Name the attributes with the same name as the corresponding table!
+  todos: Todos;
+}
+```
+
+Finally, you can instanciate a `SQLx instance`. It will ensure that your queries are valid in a type-safe way:
+
+```typescript
+import { SQLx } from "real-time-sqlx";
+
+// Export it through your app
+export const sqlx = new SQLx<Database>("sqlite");
+```
+
+The following methods are made available by this instance:
+
+- `select`: build SQL `SELECT` queries, fetched using the following functions:
+  - `fetchOne`/`fetchMany`: fetch a SQL query once
+  - `subscribeOne`/`subscribeMany`: fetch a SQL query and subscribe to its changes
+- `create`: create a row
+- `createMany`: create many rows at once
+- `update`: update a row
+- `remove`: delete a row
 
 #### Build SQL `SELECT` queries
 
 Select one or multiple rows from a table:
 
 ```typescript
-import { query } from "real-time-sqlx";
-
-const one = query<Model>("model").fetchOne();
-const many = query<Model>("model").fetchMany();
+// The return types explicited here are inferred automatically!
+const one: SingleQueryData<Model> = await sqlx.select("model").fetchOne();
+const many: ManyQueryData<Model> = await sqlx.select("model").fetchMany();
 ```
 
 Add and chain conditions:
 
 ```typescript
-import { query } from "real-time-sqlx";
-
-const q = query<Model>("model")
+const { data } = await sqlx
+  .select("model")
   .where("id", ">", 4)
-  .andWhere("title", "ilike", "%hello%");
+  .and("title", "ilike", "%hello%")
+  .fetchOne();
 ```
 
 Nest conditions:
 
 ```typescript
-import { query } from "real-time-sqlx";
-
-const q = query<Model>("models")
+const { data } = await sqlx
+  .select("models")
   .where("id", ">", 4)
-  .andWhereCallback((builder) =>
-    builder
-      .where("title", "ilike", "%hello%")
-      .orWhere("title", "ilike", "%hello%"),
-  );
+  .andCallback((builder) =>
+    builder.where("title", "ilike", "%hello%").or("title", "ilike", "%hello%"),
+  )
+  .fetchMany();
 ```
 
 Supported SQL operators:
@@ -169,25 +189,15 @@ Unsupported SQL conditions:
 
 #### Subscribe to real-time changes
 
-Fetch some data once:
-
-```typescript
-import { query, fetch } from "real-time-sqlx";
-
-const fetchModels = async (): ManyQueryData<Model> => {
-  return await fetch(query<Model>("models").fetchMany());
-};
-```
-
 Fetch some data and subscribe to real-time changes:
 
 ```typescript
-import { query, subscribe } from "real-time-sqlx";
-
-const unsubscribe = subscribe(
-  query<Model>("models").fetchMany(),
-  (data, changes) => console.log(JSON.stringify(data)),
-);
+const unsubscribe = sqlx
+  .select("models")
+  .subscribeMany(
+    (data: Model[], updates: OperationNotification<Model> | null) =>
+      console.log(JSON.stringify(data)),
+  );
 ```
 
 The `unsubscribe` function returned allows you to terminate the subscription early. It is recommended to call it at destruction, although the backend automatically prunes errored / terminated subscription.
@@ -199,50 +209,39 @@ The return types are explicited here for clarity purposes, but they are actually
 Insert a row:
 
 ```typescript
-import { execute, create } from "real-time-sqlx";
-
-const fetchModels = async (): OperationNotificationCreate<Model> | null => {
-  return await execute(
-    create<Model>("models", { title: "title", content: "content" }),
-  );
-};
+const notification: OperationNotificationCreate<Model> | null =
+  await sqlx.create("models", { title: "title", content: "content" });
 ```
 
 Insert many rows at once:
 
 ```typescript
-import { execute, createMany } from "real-time-sqlx";
-
-const fetchModels = async (): OperationNotificationCreateMany<Model> | null => {
-  return await execute(
-    createMany<Model>("models", [
-      { title: "title 1", content: "content 1" },
-      { title: "title 2", content: "content 2" },
-    ]),
-  );
-};
+const notification: OperationNotificationCreateMany<Model> | null =
+  await sqlx.createMany("models", [
+    { title: "title 1", content: "content 1" },
+    { title: "title 2", content: "content 2" },
+  ]);
 ```
 
 Update a row:
 
 ```typescript
-import { execute, create } from "real-time-sqlx";
-
-const fetchModels = async (): OperationNotificationUpdate<Model> | null => {
-  return await execute(
-    update<Model>("models", 3, { title: "new title", content: "new content" }),
+const notification: OperationNotificationUpdate<Model> | null =
+  await sqlx.update(
+    "models",
+    3, // ID
+    { title: "new title", content: "new content" },
   );
-};
 ```
 
 Delete a row:
 
 ```typescript
-import { execute, remove } from "real-time-sqlx";
-
-const fetchModels = async (): OperationNotificationUpdate<Model> | null => {
-  return await execute(remove("models", 42));
-};
+const notification: OperationNotificationUpdate<Model> | null =
+  await sqlx.delete(
+    "models",
+    42, // ID
+  );
 ```
 
 ### Backend
@@ -353,6 +352,8 @@ pub fn run() {
 - [ ] Add support for pagination (`ORDER BY`, `LIMIT`, `OFFSET`)
 - [x] Add model-related type-safety for the frontend builders
 - [ ] Expose a raw SQL endpoint for SQL queries not supported by the real-time system, but that you still might want to execute with the same ease.
+- [ ] Add support for dates / timestamps.
+- [ ] Add support for other `id` names (using an optional additional argument)
 
 ## Behind the API
 

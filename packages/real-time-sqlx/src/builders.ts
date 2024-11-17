@@ -1,5 +1,6 @@
 /** Query builders for the real-time subscription engine. */
 
+import { invoke } from "@tauri-apps/api/core";
 import {
   Condition,
   ConditionAnd,
@@ -7,87 +8,64 @@ import {
   ConditionOr,
   ConditionSingle,
 } from "./conditions";
+import type { UnsubscribeFn, UpdateManyFn, UpdateSingleFn } from "./subscribe";
+import { subscribeMany, subscribeOne } from "./subscribe";
 import {
-  type ConstraintValue,
-  type QuerySerialized,
-  type QueryOperator,
   QueryReturnType,
   type FinalValue,
+  type Indexable,
+  type ManyQueryData,
+  type QueryOperator,
+  type SerializedQuery,
+  type SingleQueryData,
 } from "./types";
 
 /** Callback to create nested queries */
-export type QueryCallback<T> = (
+export type QueryCallback<T extends Indexable> = (
   query: InitialQueryBuilder<T>,
 ) => BaseQueryBuilder<T>;
 
-// NOTE: we need 2 different final query classes instead of one with generics,
-// because typescript is not able to strongly infer the return type with nominal types.
-
-/** Final query class that can be serialized to JSON,
- * for queries that return one value.
- */
-export class FinalQuerySingle<T> {
-  constructor(
-    private _table: string,
-    private condition: Condition,
-  ) {}
-
-  toJSON(): QuerySerialized {
-    return {
-      return: QueryReturnType.Single,
-      table: this._table,
-      condition:
-        this.condition instanceof ConditionNone
-          ? null
-          : this.condition.toJSON(),
-    };
-  }
-
-  get table(): string {
-    return this._table;
-  }
-}
-
-/** Final query class that can be serialized to JSON,
- * for queries that return multiple values..
- */
-export class FinalQueryMany<T> {
-  constructor(
-    private _table: string,
-    private condition: Condition,
-  ) {}
-
-  toJSON(): QuerySerialized {
-    return {
-      return: QueryReturnType.Many,
-      table: this._table,
-      condition:
-        this.condition instanceof ConditionNone
-          ? null
-          : this.condition.toJSON(),
-    };
-  }
-
-  get table(): string {
-    return this._table;
-  }
-}
-
 /** Base class for query builders that declares shared data and methods. */
-export class BaseQueryBuilder<T> {
+export class BaseQueryBuilder<T extends Indexable> {
   constructor(
     protected table: string,
     protected condition: Condition,
   ) {}
 
   /** Fetch the first matching row */
-  fetchOne(): FinalQuerySingle<T> {
-    return new FinalQuerySingle(this.table, this.condition);
+  async fetchOne(): Promise<SingleQueryData<T>> {
+    const query: SerializedQuery = {
+      return: QueryReturnType.Single,
+      table: this.table,
+      condition:
+        this.condition instanceof ConditionNone
+          ? null
+          : this.condition.toJSON(),
+    };
+    return await invoke("fetch", { query });
   }
 
   /** Fetch all matching rows */
-  fetchMany(): FinalQueryMany<T> {
-    return new FinalQueryMany(this.table, this.condition);
+  async fetchMany(): Promise<ManyQueryData<T>> {
+    const query: SerializedQuery = {
+      return: QueryReturnType.Many,
+      table: this.table,
+      condition:
+        this.condition instanceof ConditionNone
+          ? null
+          : this.condition.toJSON(),
+    };
+    return await invoke("fetch", { query });
+  }
+
+  /** Subscribe to the first matching row */
+  subscribeOne(callback: UpdateSingleFn<T>): UnsubscribeFn {
+    return subscribeOne(this.table, this.condition, callback);
+  }
+
+  /** Subscribe to all matching rows */
+  subscribeMany(callback: UpdateManyFn<T>): UnsubscribeFn {
+    return subscribeMany(this.table, this.condition, callback);
   }
 
   /** Condition accessor for internal use. */
@@ -97,7 +75,9 @@ export class BaseQueryBuilder<T> {
 }
 
 /** Empty query builder with no conditions */
-export class InitialQueryBuilder<T> extends BaseQueryBuilder<T> {
+export class InitialQueryBuilder<
+  T extends Indexable,
+> extends BaseQueryBuilder<T> {
   constructor(table: string) {
     super(table, new ConditionNone());
   }
@@ -116,8 +96,8 @@ export class InitialQueryBuilder<T> extends BaseQueryBuilder<T> {
 
   /** Add a nested condition to the query */
   whereCallback(callback: QueryCallback<T>): QueryBuilderWithCondition<T> {
-    const builder = query(this.table);
-    return new QueryBuilderWithCondition(
+    const builder = query<T>(this.table);
+    return new QueryBuilderWithCondition<T>(
       this.table,
       callback(builder).getCondition(),
     );
@@ -125,7 +105,9 @@ export class InitialQueryBuilder<T> extends BaseQueryBuilder<T> {
 }
 
 /** Query builder with a single condition */
-class QueryBuilderWithCondition<T> extends BaseQueryBuilder<T> {
+class QueryBuilderWithCondition<
+  T extends Indexable,
+> extends BaseQueryBuilder<T> {
   constructor(
     table: string,
     protected condition: Condition,
@@ -134,7 +116,7 @@ class QueryBuilderWithCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new joint condition to the query */
-  andWhere<C extends keyof T & string, O extends QueryOperator>(
+  and<C extends keyof T & string, O extends QueryOperator>(
     column: C,
     operator: O,
     value: O extends "in" ? (T[C] & FinalValue)[] : T[C] & FinalValue,
@@ -146,7 +128,7 @@ class QueryBuilderWithCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new alternative condition to the query */
-  orWhere<C extends keyof T & string, O extends QueryOperator>(
+  or<C extends keyof T & string, O extends QueryOperator>(
     column: C,
     operator: O,
     value: O extends "in" ? (T[C] & FinalValue)[] : T[C] & FinalValue,
@@ -158,10 +140,8 @@ class QueryBuilderWithCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new nested joint condition to the query */
-  andWhereCallback(
-    callback: QueryCallback<T>,
-  ): QueryBuilderWithAndCondition<T> {
-    const builder = query(this.table);
+  andCallback(callback: QueryCallback<T>): QueryBuilderWithAndCondition<T> {
+    const builder = query<T>(this.table);
     const result = callback(builder);
 
     return QueryBuilderWithAndCondition.fromConditions(this.table, [
@@ -171,8 +151,8 @@ class QueryBuilderWithCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new nested alternative condition to the query */
-  orWhereCallback(callback: QueryCallback<T>): QueryBuilderWithOrCondition<T> {
-    const builder = query(this.table);
+  orCallback(callback: QueryCallback<T>): QueryBuilderWithOrCondition<T> {
+    const builder = query<T>(this.table);
     const result = callback(builder);
 
     return QueryBuilderWithOrCondition.fromConditions(this.table, [
@@ -183,7 +163,9 @@ class QueryBuilderWithCondition<T> extends BaseQueryBuilder<T> {
 }
 
 /** Query builder with joint conditions */
-class QueryBuilderWithAndCondition<T> extends BaseQueryBuilder<T> {
+class QueryBuilderWithAndCondition<
+  T extends Indexable,
+> extends BaseQueryBuilder<T> {
   constructor(
     table: string,
     protected condition: ConditionAnd,
@@ -192,7 +174,7 @@ class QueryBuilderWithAndCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new joint condition to the query */
-  andWhere<C extends keyof T & string, O extends QueryOperator>(
+  and<C extends keyof T & string, O extends QueryOperator>(
     column: C,
     operator: O,
     value: O extends "in" ? (T[C] & FinalValue)[] : T[C] & FinalValue,
@@ -205,10 +187,8 @@ class QueryBuilderWithAndCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new nested joint condition to the query */
-  andWhereCallback(
-    callback: QueryCallback<T>,
-  ): QueryBuilderWithAndCondition<T> {
-    const builder = query(this.table);
+  andCallback(callback: QueryCallback<T>): QueryBuilderWithAndCondition<T> {
+    const builder = query<T>(this.table);
     const result = callback(builder);
     this.condition.conditions.push(result.getCondition());
 
@@ -216,8 +196,11 @@ class QueryBuilderWithAndCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Create a new query builder from a list of conditions */
-  static fromConditions(table: string, conditions: Condition[]) {
-    return new QueryBuilderWithAndCondition(
+  static fromConditions<T extends Indexable>(
+    table: string,
+    conditions: Condition[],
+  ) {
+    return new QueryBuilderWithAndCondition<T>(
       table,
       new ConditionAnd(conditions),
     );
@@ -225,7 +208,9 @@ class QueryBuilderWithAndCondition<T> extends BaseQueryBuilder<T> {
 }
 
 /** Query builder with alternative conditions */
-class QueryBuilderWithOrCondition<T> extends BaseQueryBuilder<T> {
+class QueryBuilderWithOrCondition<
+  T extends Indexable,
+> extends BaseQueryBuilder<T> {
   constructor(
     table: string,
     protected condition: ConditionOr,
@@ -234,7 +219,7 @@ class QueryBuilderWithOrCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new alternative condition to the query */
-  orWhere<C extends keyof T & string, O extends QueryOperator>(
+  or<C extends keyof T & string, O extends QueryOperator>(
     column: C,
     operator: O,
     value: O extends "in" ? (T[C] & FinalValue)[] : T[C] & FinalValue,
@@ -246,8 +231,8 @@ class QueryBuilderWithOrCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Add a new nested alternative condition to the query */
-  orWhereCallback(callback: QueryCallback<T>): QueryBuilderWithOrCondition<T> {
-    const builder = query(this.table);
+  orCallback(callback: QueryCallback<T>): QueryBuilderWithOrCondition<T> {
+    const builder = query<T>(this.table);
     const result = callback(builder);
     this.condition.conditions.push(result.getCondition());
 
@@ -255,11 +240,20 @@ class QueryBuilderWithOrCondition<T> extends BaseQueryBuilder<T> {
   }
 
   /** Create a new query builder from a list of conditions */
-  static fromConditions(table: string, conditions: Condition[]) {
-    return new QueryBuilderWithOrCondition(table, new ConditionOr(conditions));
+  static fromConditions<T extends Indexable>(
+    table: string,
+    conditions: Condition[],
+  ) {
+    return new QueryBuilderWithOrCondition<T>(
+      table,
+      new ConditionOr(conditions),
+    );
   }
 }
 
-/** Create a new query on a table */
-export const query = <T>(table: string): InitialQueryBuilder<T> =>
+/** Create a new query on a table.
+ * Duplicated here but not exported,
+ * without type checking for internal use.
+ */
+const query = <T extends Indexable>(table: string): InitialQueryBuilder<T> =>
   new InitialQueryBuilder(table);

@@ -1,6 +1,6 @@
 {
   "name": "real-time-sqlx",
-  "version": "0.1.0",
+  "version": "0.1.7",
   "author": {
     "name": "Thibaut de Saivre",
     "url": "https://github.com/GnRlLeclerc"
@@ -9,6 +9,7 @@
   "module": "dist/index.js",
   "dependencies": {
     "@tauri-apps/api": "^2.1.1",
+    "kysely": "^0.27.4",
     "uuid": "^11.0.3"
   },
   "devDependencies": {},
