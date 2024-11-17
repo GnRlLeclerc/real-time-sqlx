@@ -5,6 +5,10 @@ edition = "2021"
 repository = "https://github.com/GnRlLeclerc/real-time-sqlx"
 authors = ["Thibaut de Saivre"]
 description = "Real-time SQLx backend for Tauri"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["database", "async", "real-time", "subscribe", "sqlite"]
+categories = ["database", "asynchronous"]
 
 [features]
 postgres = ["sqlx/postgres"]
