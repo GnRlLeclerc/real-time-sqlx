@@ -1,10 +1,17 @@
 {
   "name": "real-time-sqlx",
-  "version": "0.1.7",
+  "version": "0.1.0",
   "author": {
     "name": "Thibaut de Saivre",
     "url": "https://github.com/GnRlLeclerc"
   },
+  "license": "MIT or Apache-2.0",
+  "keywords": [
+    "database",
+    "real-time",
+    "tauri",
+    "sqlite"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "dependencies": {

@@ -7,7 +7,7 @@ authors = ["Thibaut de Saivre"]
 description = "Real-time SQLx backend for Tauri"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-keywords = ["database", "async", "real-time", "subscribe", "sqlite"]
+keywords = ["database", "async", "real-time", "tauri", "sqlite"]
 categories = ["database", "asynchronous"]
 
 [features]

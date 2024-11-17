@@ -53,32 +53,17 @@ This project relies on the [sqlx](https://github.com/launchbadge/sqlx) rust crat
 
 For NixOS users, a devshell is provided for this project (which works with Tauri). Run `nix develop`.
 
-As of now, this project is not listed on `crates.io` nor `npmjs.com`.
-
-Install the backend crate in your `Cargo.toml`:
+Add the backend crate in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-real-time-sqlx = { git = "https://github.com/GnRlLeclerc/real-time-sqlx", version = "0.1", features = ["sqlite", "tauri"] }
+real-time-sqlx = { version = "0.1", features = ["sqlite", "tauri"] }
 ```
 
-Install the frontend by cloning and building it, then using a local path:
+Install the frontend with your favorite package manager:
 
 ```bash
-git clone git@github.com:GnRlLeclerc/real-time-sqlx.git
-cd packages/real-time-sqlx
-bun install
-bun run build
-```
-
-In your package.json:
-
-```json
-{
-  "dependencies": {
-    "real-time-sqlx": "file:path/to/real-time-sqlx/packages/real-time-sqlx"
-  }
-}
+bun add real-time-sqlx
 ```
 
 ## Features
@@ -362,7 +347,8 @@ pub fn run() {
             fetch,
             subscribe,
             unsubscribe,
-            execute
+            execute,
+            raw
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
