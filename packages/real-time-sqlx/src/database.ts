@@ -79,12 +79,15 @@ export class SQLx<DB extends Record<keyof DB, Indexable>> {
   }
 
   /** Execute a raw prepared SQL query. Returns a list of rows. */
-  async rawOne<T = any>(sql: string, values: FinalValue[]): Promise<T | null> {
+  async rawOne<T = any>(
+    sql: string,
+    values: FinalValue[] = [],
+  ): Promise<T | null> {
     return (await invoke<T[]>("raw", { sql, values }))[0] ?? null;
   }
 
   /** Execute a raw prepared SQL query. Returns a list of rows. */
-  async rawMany<T = any>(sql: string, values: FinalValue[]): Promise<T[]> {
+  async rawMany<T = any>(sql: string, values: FinalValue[] = []): Promise<T[]> {
     return await invoke("raw", { sql, values });
   }
 }

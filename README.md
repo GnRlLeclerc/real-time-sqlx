@@ -24,6 +24,7 @@ A simple <a href="https://v2.tauri.app/">Tauri</a> real-time query engine inspir
      - [Build SQL `SELECT` queries](#build-sql-select-queries)
      - [Subscribe to real-time changes](#subscribe-to-real-time-changes)
      - [Execute SQL operations](#execute-sql-operations)
+     - [Execute raw SQL](#execute-raw-sql)
    - [Backend](#backend)
      - [Feature flags](#feature-flags)
      - [Configuration](#configuration)
@@ -137,6 +138,8 @@ The following methods are made available by this instance:
 - `createMany`: create many rows at once
 - `update`: update a row
 - `remove`: delete a row
+- `rawOne`: execute a sql query, returning one row at most
+- `rawMany`: execute a sql query, returning all rows
 
 #### Build SQL `SELECT` queries
 
@@ -244,6 +247,27 @@ const notification: OperationNotificationUpdate<Model> | null =
   );
 ```
 
+#### Execute raw SQL
+
+Because these simple query builders do not include all possible SQL operations, 2 more methods exist to execute raw prepared SQL queries.
+
+Execute a SQL query and return at most one row (or `null` if nothing is returned):
+
+```typescript
+const data: Model | null = await sqlx.rawOne(
+  "SELECT * from models where id = ?",
+  [42],
+);
+```
+
+Execute a SQL query and return all found rows:
+
+```typescript
+const data: Model[] = await sqlx.rawMany("SELECT * from models where id > ?", [
+  1,
+]);
+```
+
 ### Backend
 
 #### Feature Flags
@@ -294,6 +318,7 @@ It also creates the following Tauri commands:
 - `execute`
 - `subscribe`
 - `unsubscribe`
+- `raw`
 
 These Tauri commands expect 2 states to be managed by Tauri:
 
@@ -351,7 +376,7 @@ pub fn run() {
 
 - [ ] Add support for pagination (`ORDER BY`, `LIMIT`, `OFFSET`)
 - [x] Add model-related type-safety for the frontend builders
-- [ ] Expose a raw SQL endpoint for SQL queries not supported by the real-time system, but that you still might want to execute with the same ease.
+- [x] Expose a raw SQL endpoint for SQL queries not supported by the real-time system, but that you still might want to execute with the same ease.
 - [ ] Add support for dates / timestamps.
 - [ ] Add support for other `id` names (using an optional additional argument)
 
