@@ -200,7 +200,7 @@ const unsubscribe = sqlx
   );
 ```
 
-The `unsubscribe` function returned allows you to terminate the subscription early. It is recommended to call it at destruction, although the backend automatically prunes errored / terminated subscription.
+The `unsubscribe` function returned allows you to terminate the subscription early. It is recommended to call it at destruction, although the backend automatically prunes errored / terminated subscriptions.
 
 #### Execute SQL operations
 
@@ -270,7 +270,7 @@ pub struct Model {
 
 #[derive(sqlx::FromRow, serde::Serialize, Clone)]
 pub struct Todo {
-    pub id: i64,
+    pub id: String,
     pub title: String,
     pub content: String,
 }

@@ -3,7 +3,7 @@
 use sqlx::{
     mysql::{MySqlArguments, MySqlRow},
     query::Query,
-    Executor, FromRow, MySql,
+    Column, Executor, FromRow, MySql, Row, TypeInfo,
 };
 
 use crate::{
@@ -62,6 +62,59 @@ where
             return QueryData::Many(rows);
         }
     }
+}
+
+/// Convert a MySQL row to a JSON object
+pub fn mysql_row_to_json(row: &MySqlRow) -> serde_json::Value {
+    let mut json_map = serde_json::Map::new();
+
+    for column in row.columns() {
+        let column_name = column.name();
+        let column_type = column.type_info().name();
+
+        // Dynamically match the type and insert it into the JSON map
+        let value = match column_type {
+            "INTEGER" => row
+                .try_get::<i64, _>(column_name)
+                .ok()
+                .map(serde_json::Value::from),
+            "REAL" | "NUMERIC" => row
+                .try_get::<f64, _>(column_name)
+                .ok()
+                .map(serde_json::Value::from),
+            "BOOLEAN" => row
+                .try_get::<bool, _>(column_name)
+                .ok()
+                .map(serde_json::Value::from),
+            "TEXT" | "DATE" | "TIME" | "DATETIME" => row
+                .try_get::<String, _>(column_name)
+                .ok()
+                .map(serde_json::Value::from),
+            "NULL" => Some(serde_json::Value::Null),
+            "BLOB" => None, // Skip BLOB columns
+            _ => None,      // Handle other types as needed
+        };
+
+        // Add to JSON map if value is present
+        if let Some(v) = value {
+            json_map.insert(column_name.to_string(), v);
+        } else {
+            json_map.insert(column_name.to_string(), serde_json::Value::Null);
+        }
+    }
+
+    serde_json::Value::Object(json_map)
+}
+
+/// Convert a vector of MySQL rows to a JSON array
+pub fn mysql_rows_to_json(rows: &[MySqlRow]) -> serde_json::Value {
+    let mut json_array = Vec::new();
+
+    for row in rows {
+        json_array.push(mysql_row_to_json(row));
+    }
+
+    serde_json::Value::Array(json_array)
 }
 
 /// Helper function signature for serializing MySQL rows to JSON

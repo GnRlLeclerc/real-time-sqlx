@@ -85,6 +85,30 @@ macro_rules! real_time_tauri {
 
             Ok(value)
         }
+
+        /// Execute a raw SQL query with prepared statements
+        #[tauri::command]
+        pub async fn raw(
+            // Managed by Tauri
+            pool: tauri::State<'_, $crate::database_pool!($db_type)>,
+            // Passed as arguments
+            sql: String,
+            values: Vec<$crate::queries::serialize::FinalType>,
+        ) -> tauri::Result<serde_json::Value> {
+            let pool: &$crate::database_pool!($db_type) = &pool;
+
+            let mut query = sqlx::query(&sql);
+
+            $crate::macros::paste::paste! {
+                for value in values {
+                    query = $crate::database::$db_type::[<bind_ $db_type _value>](query, value);
+                }
+                let rows = query.fetch_all(pool).await.unwrap();
+                let serialized_rows = $crate::database::$db_type::[<$db_type _rows_to_json>](&rows);
+            }
+
+            Ok(serialized_rows)
+        }
     };
 }
 
