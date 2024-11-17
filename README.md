@@ -122,8 +122,8 @@ Select one or multiple rows from a table:
 ```typescript
 import { query } from "real-time-sqlx";
 
-const one = query("model").fetchOne();
-const many = query("model").fetchMany();
+const one = query<Model>("model").fetchOne();
+const many = query<Model>("model").fetchMany();
 ```
 
 Add and chain conditions:
@@ -131,7 +131,7 @@ Add and chain conditions:
 ```typescript
 import { query } from "real-time-sqlx";
 
-const q = query("model")
+const q = query<Model>("model")
   .where("id", ">", 4)
   .andWhere("title", "ilike", "%hello%");
 ```
@@ -141,7 +141,7 @@ Nest conditions:
 ```typescript
 import { query } from "real-time-sqlx";
 
-const q = query("models")
+const q = query<Model>("models")
   .where("id", ">", 4)
   .andWhereCallback((builder) =>
     builder
@@ -175,7 +175,7 @@ Fetch some data once:
 import { query, fetch } from "real-time-sqlx";
 
 const fetchModels = async (): ManyQueryData<Model> => {
-  return await fetch<Model>(query("models").fetchMany());
+  return await fetch(query<Model>("models").fetchMany());
 };
 ```
 
@@ -184,8 +184,8 @@ Fetch some data and subscribe to real-time changes:
 ```typescript
 import { query, subscribe } from "real-time-sqlx";
 
-const unsubscribe = subscribe<Model>(
-  query("models").fetchMany(),
+const unsubscribe = subscribe(
+  query<Model>("models").fetchMany(),
   (data, changes) => console.log(JSON.stringify(data)),
 );
 ```
@@ -351,7 +351,7 @@ pub fn run() {
 ## Roadmap
 
 - [ ] Add support for pagination (`ORDER BY`, `LIMIT`, `OFFSET`)
-- [ ] Add model-related type-safety for the frontend builders
+- [x] Add model-related type-safety for the frontend builders
 - [ ] Expose a raw SQL endpoint for SQL queries not supported by the real-time system, but that you still might want to execute with the same ease.
 
 ## Behind the API

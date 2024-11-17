@@ -45,7 +45,9 @@ const tauriExecute = async (operation: GranularOperation) => {
  */
 export const execute = tauriExecute as OperationFn;
 
-const tauriFetch = async (query: FinalQuerySingle | FinalQueryMany) => {
+const tauriFetch = async <T>(
+  query: FinalQuerySingle<T> | FinalQueryMany<T>,
+) => {
   const invoke = await getInvoke();
   return await invoke("fetch", { query: query.toJSON() });
 };
@@ -60,7 +62,7 @@ export const fetch = tauriFetch as FetchFn;
 // ************************************************************************* //
 
 const tauriSubscribe = <T extends Indexable>(
-  query: FinalQuerySingle | FinalQueryMany,
+  query: FinalQuerySingle<T> | FinalQueryMany<T>,
   callback: UpdateSingleFn<T> | UpdateManyFn<T>,
 ): UnsubscribeFn => {
   if (query instanceof FinalQuerySingle) {
@@ -78,7 +80,7 @@ export const subscribe = tauriSubscribe as SubscribeFn;
 
 /** Implementation of the subscription to a single optional value */
 const subscribeSingle = <T extends Indexable>(
-  finalQuery: FinalQuerySingle,
+  finalQuery: FinalQuerySingle<T>,
   callback: UpdateSingleFn<T>,
 ): UnsubscribeFn => {
   // Generate a unique subscription ID and an unsubscription function.
@@ -151,7 +153,7 @@ const subscribeSingle = <T extends Indexable>(
 
 /** Implementation of the subscription to a list of values */
 const subscribeMany = <T extends Indexable>(
-  finalQuery: FinalQueryMany,
+  finalQuery: FinalQueryMany<T>,
   callback: UpdateManyFn<T>,
 ): UnsubscribeFn => {
   // Generate a unique subscription ID and an unsubscription function.

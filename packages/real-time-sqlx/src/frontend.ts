@@ -29,8 +29,8 @@ export * from "./frontend/tauri";
  *
  */
 export type FetchFn = {
-  <T>(query: FinalQuerySingle): Promise<SingleQueryData<T>>;
-  <T>(query: FinalQueryMany): Promise<ManyQueryData<T>>;
+  <T>(query: FinalQuerySingle<T>): Promise<SingleQueryData<T>>;
+  <T>(query: FinalQueryMany<T>): Promise<ManyQueryData<T>>;
 };
 
 /** Overloaded operation function definition. If the returned operation is null,
@@ -67,11 +67,11 @@ export type UpdateManyFn<T extends Indexable> = (
 /** Overloaded subscribe function definition */
 export type SubscribeFn = {
   <T extends Indexable>(
-    query: FinalQuerySingle,
+    query: FinalQuerySingle<T>,
     callback: UpdateSingleFn<T>,
   ): UnsubscribeFn;
   <T extends Indexable>(
-    query: FinalQueryMany,
+    query: FinalQueryMany<T>,
     callback: UpdateManyFn<T>,
   ): UnsubscribeFn;
 };
