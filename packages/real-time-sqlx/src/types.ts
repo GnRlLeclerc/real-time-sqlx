@@ -54,6 +54,13 @@ export type ConditionSerialized =
 //                                 QUERIES                                   //
 // ************************************************************************* //
 
+/** Pagination options */
+export interface PaginateOptions<T extends Indexable> {
+  perPage: number;
+  initialOffset: number | null;
+  orderBy: [keyof T, "asc" | "desc"] | null;
+}
+
 /** How many rows should be returned from the query */
 export enum QueryReturnType {
   Single = "single",
@@ -61,10 +68,11 @@ export enum QueryReturnType {
 }
 
 /** Complete query data */
-export interface SerializedQuery {
+export interface SerializedQuery<T extends Indexable> {
   return: QueryReturnType;
   table: string;
   condition: ConditionSerialized | null;
+  paginate: PaginateOptions<T> | null;
 }
 
 // ************************************************************************* //

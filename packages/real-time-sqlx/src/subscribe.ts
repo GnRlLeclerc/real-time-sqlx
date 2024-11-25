@@ -20,6 +20,11 @@ import {
 /** Unsubscribe to a channel */
 export type UnsubscribeFn = () => void;
 
+/** Fetch more from a paginated query.
+ * Returns the amount of additionally fetched rows
+ */
+export type FetchMoreFn = () => Promise<number>;
+
 export type UpdateSingleFn<T extends Indexable> = (
   data: T | null,
   updates: OperationNotification<T> | null,
@@ -79,10 +84,11 @@ export const subscribeOne = <T extends Indexable>(
   };
 
   // Send the initial query to the database
-  const query: SerializedQuery = {
+  const query: SerializedQuery<T> = {
     return: QueryReturnType.Single,
     table,
     condition: condition instanceof ConditionNone ? null : condition.toJSON(),
+    paginate: null,
   };
   invoke<SingleQueryData<T>>("subscribe", {
     query,
@@ -120,6 +126,9 @@ export const subscribeMany = <T extends Indexable>(
     // Update cached internal data
     switch (update.type) {
       case OperationType.Delete:
+        if (internalMap[update.data.id as string | number] === undefined) {
+          return;
+        }
         delete internalMap[update.data.id as string | number];
         internalData = Object.values(internalMap);
         break;
@@ -141,10 +150,11 @@ export const subscribeMany = <T extends Indexable>(
   };
 
   // Send the query to the database
-  const query: SerializedQuery = {
+  const query: SerializedQuery<T> = {
     return: QueryReturnType.Many,
     table,
     condition: condition instanceof ConditionNone ? null : condition.toJSON(),
+    paginate: null,
   };
   invoke<ManyQueryData<T>>("subscribe", {
     query,

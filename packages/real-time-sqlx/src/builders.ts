@@ -8,17 +8,24 @@ import {
   ConditionOr,
   ConditionSingle,
 } from "./conditions";
-import type { UnsubscribeFn, UpdateManyFn, UpdateSingleFn } from "./subscribe";
+import type {
+  FetchMoreFn,
+  UnsubscribeFn,
+  UpdateManyFn,
+  UpdateSingleFn,
+} from "./subscribe";
 import { subscribeMany, subscribeOne } from "./subscribe";
 import {
   QueryReturnType,
   type FinalValue,
   type Indexable,
   type ManyQueryData,
+  type PaginateOptions,
   type QueryOperator,
   type SerializedQuery,
   type SingleQueryData,
 } from "./types";
+import { paginate } from "./paginate";
 
 /** Callback to create nested queries */
 export type QueryCallback<T extends Indexable> = (
@@ -33,27 +40,29 @@ export class BaseQueryBuilder<T extends Indexable> {
   ) {}
 
   /** Fetch the first matching row */
-  async fetchOne(): Promise<SingleQueryData<T>> {
-    const query: SerializedQuery = {
+  async fetchOne(options?: PaginateOptions<T>): Promise<SingleQueryData<T>> {
+    const query: SerializedQuery<T> = {
       return: QueryReturnType.Single,
       table: this.table,
       condition:
         this.condition instanceof ConditionNone
           ? null
           : this.condition.toJSON(),
+      paginate: options ?? null,
     };
     return await invoke("fetch", { query });
   }
 
   /** Fetch all matching rows */
-  async fetchMany(): Promise<ManyQueryData<T>> {
-    const query: SerializedQuery = {
+  async fetchMany(options?: PaginateOptions<T>): Promise<ManyQueryData<T>> {
+    const query: SerializedQuery<T> = {
       return: QueryReturnType.Many,
       table: this.table,
       condition:
         this.condition instanceof ConditionNone
           ? null
           : this.condition.toJSON(),
+      paginate: options ?? null,
     };
     return await invoke("fetch", { query });
   }
@@ -66,6 +75,14 @@ export class BaseQueryBuilder<T extends Indexable> {
   /** Subscribe to all matching rows */
   subscribeMany(callback: UpdateManyFn<T>): UnsubscribeFn {
     return subscribeMany(this.table, this.condition, callback);
+  }
+
+  /** Subscribe to a paginated query */
+  paginate(
+    options: PaginateOptions<T>,
+    callback: UpdateManyFn<T>,
+  ): [UnsubscribeFn, FetchMoreFn] {
+    return paginate(this.table, this.condition, options, callback);
   }
 
   /** Condition accessor for internal use. */
