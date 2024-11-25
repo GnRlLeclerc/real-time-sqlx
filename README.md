@@ -397,10 +397,10 @@ pub fn run() {
 
 ## Roadmap
 
-- [ ] Add support for pagination (`ORDER BY`, `LIMIT`, `OFFSET`)
+- [x] Add support for pagination (`ORDER BY`, `LIMIT`, `OFFSET`)
 - [x] Add model-related type-safety for the frontend builders
 - [x] Expose a raw SQL endpoint for SQL queries not supported by the real-time system, but that you still might want to execute with the same ease.
-- [ ] Add support for dates / timestamps.
+- [ ] Add end-to-end testing.
 - [ ] Add support for other `id` names (using an optional additional argument)
 
 ## Behind the API

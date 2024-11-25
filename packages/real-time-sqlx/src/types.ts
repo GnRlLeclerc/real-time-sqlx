@@ -63,8 +63,8 @@ export interface OrderBy<T extends Indexable> {
 /** Pagination options */
 export interface PaginateOptions<T extends Indexable> {
   perPage: number;
-  offset: number | null;
-  orderBy: OrderBy<T> | null;
+  offset?: number;
+  orderBy?: OrderBy<T>;
 }
 
 /** How many rows should be returned from the query */

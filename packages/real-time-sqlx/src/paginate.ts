@@ -48,9 +48,9 @@ const isInRange = <T extends Indexable>(
     return true;
   }
   if (order === "asc") {
-    return item[column] >= lastValue;
-  } else {
     return item[column] <= lastValue;
+  } else {
+    return item[column] >= lastValue;
   }
 };
 
@@ -178,7 +178,7 @@ export const paginate = <T extends Indexable>(
       paginate,
     };
 
-    const { data } = await invoke<ManyQueryData<T>>("subscribe", {
+    const { data } = await invoke<ManyQueryData<T>>("fetch", {
       query,
       channel,
       channelId,
