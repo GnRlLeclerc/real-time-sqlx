@@ -1,0 +1,13 @@
+{
+  "return": "single",
+  "table": "todos",
+  "condition": null,
+  "paginate": {
+    "perPage": 1,
+    "orderBy": {
+      "column": "id",
+      "order": "desc"
+    },
+    "offset": 1
+  }
+}

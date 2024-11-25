@@ -92,6 +92,26 @@ pub enum ReturnType {
     Many,
 }
 
+/// Column and order for sorting
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "order", content = "column")]
+pub enum OrderBy {
+    #[serde(rename = "asc")]
+    Asc(String),
+    #[serde(rename = "desc")]
+    Desc(String),
+}
+
+/// Pagination options
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PaginateOptions {
+    #[serde(rename = "perPage")]
+    pub per_page: u64,
+    pub offset: Option<u64>,
+    #[serde(rename = "orderBy")]
+    pub order_by: Option<OrderBy>,
+}
+
 /// Final serialized query tree
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueryTree {
@@ -99,6 +119,7 @@ pub struct QueryTree {
     pub return_type: ReturnType,
     pub table: String,
     pub condition: Option<Condition>,
+    pub paginate: Option<PaginateOptions>,
 }
 
 /// Returned query data

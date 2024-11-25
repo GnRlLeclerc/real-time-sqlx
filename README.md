@@ -23,6 +23,7 @@ A simple <a href="https://v2.tauri.app/">Tauri</a> real-time query engine inspir
    - [Frontend](#frontend)
      - [Build SQL `SELECT` queries](#build-sql-select-queries)
      - [Subscribe to real-time changes](#subscribe-to-real-time-changes)
+     - [Paginate SQL queries](#paginate-queries)
      - [Execute SQL operations](#execute-sql-operations)
      - [Execute raw SQL](#execute-raw-sql)
    - [Backend](#backend)
@@ -189,6 +190,42 @@ const unsubscribe = sqlx
 ```
 
 The `unsubscribe` function returned allows you to terminate the subscription early. It is recommended to call it at destruction, although the backend automatically prunes errored / terminated subscriptions.
+
+#### Paginate queries
+
+Pagination options are supported for SQL queries. By default, if pagination options are specified without the `orderBy` clause, the results will be ordered by `id DESC` (most recent entries first, for autoincrement primary keys).
+
+```typescript
+const { data } = await sqlx.select("model").fetchOne({
+  perPage: 10,
+  offset: 0,
+  orderBy: { column: "id", order: "desc" },
+});
+```
+
+```typescript
+const { data } = await sqlx.select("model").fetchMany({
+  perPage: 10,
+  offset: 0,
+  orderBy: { column: "id", order: "desc" },
+});
+```
+
+You can subscribe to real-time paginated queries! The `paginate` method returns an unsubscribe function as well as a `fetchMore` function to iterate over the data.
+
+```typescript
+const [unsubscribe, fetchMore] = sqlx.select("model").paginate(
+  {
+    perPage: 10,
+    offset: 0,
+    orderBy: { column: "id", order: "desc" },
+  },
+  (data: Model[], updates: OperationNotification<Model> | null) =>
+    console.log(JSON.stringify(data)),
+);
+
+const affectedRowCount = await fetchMore();
+```
 
 #### Execute SQL operations
 

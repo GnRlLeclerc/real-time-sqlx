@@ -5,7 +5,10 @@ use serde::Serialize;
 use sqlx::FromRow;
 
 use crate::{
-    queries::serialize::{Condition, Constraint, ConstraintValue, FinalType, QueryData, QueryTree},
+    queries::serialize::{
+        Condition, Constraint, ConstraintValue, FinalType, OrderBy, PaginateOptions, QueryData,
+        QueryTree,
+    },
     utils::{placeholders, sanitize_identifier},
 };
 
@@ -22,16 +25,24 @@ pub mod sqlite;
 /// from a deserialized query, and for use in a SQLx query
 fn prepare_sqlx_query(query: &QueryTree) -> (String, Vec<FinalType>) {
     let mut string_query = "SELECT * FROM ".to_string();
+    let mut values = vec![];
     string_query.push_str(&sanitize_identifier(&query.table));
 
     if let Some(condition) = &query.condition {
         string_query.push_str(" WHERE ");
         let (placeholders, args) = condition.traverse();
         string_query.push_str(&placeholders);
-        return (string_query, args);
+        values.extend(args);
     }
 
-    (string_query, vec![])
+    if let Some(paginate) = &query.paginate {
+        string_query.push_str(" ");
+        let pagination = paginate.traverse();
+        string_query.push_str(&pagination.0);
+        values.extend(pagination.1);
+    }
+
+    (string_query, values)
 }
 
 /// Serialize SQL rows to json by mapping them to an intermediate data model structure
@@ -102,6 +113,37 @@ impl Traversable for Condition {
             Condition::Or { conditions } => reduce_constraints_list(conditions, " OR "),
             Condition::And { conditions } => reduce_constraints_list(conditions, " AND "),
         }
+    }
+}
+
+impl Traversable for PaginateOptions {
+    /// Traverse a query pagination options
+    fn traverse(&self) -> (String, Vec<FinalType>) {
+        let mut query_string = "".to_string();
+        let mut values: Vec<FinalType> = vec![];
+
+        if let Some(order) = &self.order_by {
+            query_string.push_str(
+                match order {
+                    OrderBy::Asc(col) => format!("ORDER BY {} ASC ", sanitize_identifier(col)),
+                    OrderBy::Desc(col) => format!("ORDER BY {} DESC ", sanitize_identifier(col)),
+                }
+                .as_str(),
+            );
+        } else {
+            // By default, if paginate options are present, order by ID descending
+            query_string.push_str("ORDER BY id DESC ");
+        }
+
+        query_string.push_str("LIMIT ? ");
+        values.push(FinalType::Number(self.per_page.into()));
+
+        if let Some(offset) = self.offset {
+            query_string.push_str("OFFSET ? ");
+            values.push(FinalType::Number(offset.into()));
+        }
+
+        (query_string, values)
     }
 }
 

@@ -54,11 +54,17 @@ export type ConditionSerialized =
 //                                 QUERIES                                   //
 // ************************************************************************* //
 
+/** Order by options */
+export interface OrderBy<T extends Indexable> {
+  column: keyof T;
+  order: "asc" | "desc";
+}
+
 /** Pagination options */
 export interface PaginateOptions<T extends Indexable> {
   perPage: number;
-  initialOffset: number | null;
-  orderBy: [keyof T, "asc" | "desc"] | null;
+  offset: number | null;
+  orderBy: OrderBy<T> | null;
 }
 
 /** How many rows should be returned from the query */

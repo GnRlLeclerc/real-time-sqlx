@@ -9,24 +9,27 @@ import {
   type Indexable,
   type ManyQueryData,
   type OperationNotification,
+  type OrderBy,
   type PaginateOptions,
   type SerializedQuery,
 } from "./types";
 import { v4 as uuidv4 } from "uuid";
+
+const DEFAULT_ORDER = { column: "id", order: "desc" } as const;
 
 /** Sort an array of objects by a key.
  * If no option is given, sorts by decreasing index
  */
 const sortBy = <T extends Indexable>(
   array: T[],
-  orderBy: [keyof T, "asc" | "desc"] | null = null,
+  orderBy: OrderBy<T> | null = null,
 ): T[] => {
-  const [key, order] = orderBy ?? ["id", "desc"];
+  const { column, order } = orderBy ?? DEFAULT_ORDER;
   return array.sort((a, b) => {
     if (order === "asc") {
-      return a[key] >= b[key] ? 1 : -1;
+      return a[column] >= b[column] ? 1 : -1;
     } else {
-      return a[key] <= b[key] ? 1 : -1;
+      return a[column] <= b[column] ? 1 : -1;
     }
   });
 };
@@ -37,31 +40,31 @@ const sortBy = <T extends Indexable>(
 const isInRange = <T extends Indexable>(
   item: T,
   lastValue: any | null,
-  orderBy: [keyof T, "asc" | "desc"] | null = null,
+  orderBy: OrderBy<T> | null = null,
 ) => {
-  const [key, order] = orderBy ?? ["id", "desc"];
+  const { column, order } = orderBy ?? DEFAULT_ORDER;
 
   if (lastValue === null) {
     return true;
   }
   if (order === "asc") {
-    return item[key] >= lastValue;
+    return item[column] >= lastValue;
   } else {
-    return item[key] <= lastValue;
+    return item[column] <= lastValue;
   }
 };
 
 /** Update the last accepted discriminant value for the current pagination range */
 const updateDiscriminant = <T extends Indexable>(
   sortedValues: T[],
-  orderBy: [keyof T, "asc" | "desc"] | null = null,
+  orderBy: OrderBy<T> | null = null,
 ) => {
   if (sortedValues.length === 0) {
     return null;
   }
-  const key = orderBy?.[0] ?? "id";
+  const column = orderBy?.column ?? DEFAULT_ORDER.column;
 
-  return sortedValues[sortedValues.length - 1][key];
+  return sortedValues[sortedValues.length - 1][column];
 };
 
 /** Implementation of the subscription to a list of values */
@@ -165,7 +168,7 @@ export const paginate = <T extends Indexable>(
     const paginate: PaginateOptions<T> = {
       orderBy: options.orderBy,
       perPage: options.perPage,
-      initialOffset: internalData.length + (options.initialOffset ?? 0),
+      offset: internalData.length + (options.offset ?? 0),
     };
 
     const query: SerializedQuery<T> = {
@@ -184,6 +187,14 @@ export const paginate = <T extends Indexable>(
     if (data.length === 0) {
       anyLeft = false;
     }
+
+    // Merge the new data with the existing one
+    data.forEach((d) => (internalMap[d.id as string | number] = d));
+    internalData = sortBy(Object.values(internalMap), options.orderBy);
+    lastDiscriminant = updateDiscriminant(internalData, options.orderBy);
+
+    // Call the callback with the new data
+    callback(internalData, null);
 
     // Return the amount of affected rows
     return data.length;

@@ -199,3 +199,53 @@ async fn test_sqlite_in() {
         }
     }
 }
+
+/// Test paginated single row queries
+#[tokio::test]
+async fn test_sqlite_paginated_single() {
+    let pool = dummy_sqlite_database().await;
+    prepare_dummy_sqlite_database(&pool).await;
+
+    let query = read_serialized_query("08_paginated_single.json");
+    let result = fetch_sqlite_query(&query, &pool).await;
+
+    match result {
+        QueryData::Single(row) => {
+            assert!(row.is_some());
+
+            let row = Todo::from_row(&row.unwrap()).expect("Failed to convert row");
+
+            assert_eq!(row.id, 2);
+            assert_eq!(row.title, "Second todo");
+            assert_eq!(row.content, "This is the second todo");
+        }
+        QueryData::Many(_) => {
+            panic!("Expected one single row")
+        }
+    }
+}
+
+/// Test paginated multi row queries
+#[tokio::test]
+async fn test_sqlite_paginated_many() {
+    let pool = dummy_sqlite_database().await;
+    prepare_dummy_sqlite_database(&pool).await;
+
+    let query = read_serialized_query("09_paginated_many.json");
+    let result = fetch_sqlite_query(&query, &pool).await;
+
+    match result {
+        QueryData::Single(_) => {
+            panic!("Expected many rows")
+        }
+        QueryData::Many(rows) => {
+            assert_eq!(rows.len(), 1);
+
+            let row = Todo::from_row(&rows[0]).expect("Failed to convert row");
+
+            assert_eq!(row.id, 2);
+            assert_eq!(row.title, "Second todo");
+            assert_eq!(row.content, "This is the second todo");
+        }
+    }
+}
